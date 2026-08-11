@@ -1,4 +1,11 @@
 import { useState } from 'react';
+import {
+  PauseCircleIcon,
+  RefreshIcon,
+  TrashIcon,
+  CheckIcon,
+  XIcon,
+} from './icons';
 
 interface Account {
   id: string;
@@ -29,12 +36,20 @@ interface Props {
   onDelete: () => void;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  active: '#10b981',
-  disabled: '#6b7280',
-  exhausted: '#f59e0b',
-  error: '#f43f5e',
-  pending_verification: '#6366f1',
+export function PlayIcon({ size = 16, className }: { size?: number; className?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <polygon points="6 3 20 12 6 21 6 3" />
+    </svg>
+  );
+}
+
+const STATUS_BADGES: Record<string, { color: string; bg: string }> = {
+  active: { color: '#34d399', bg: 'rgba(52, 211, 153, 0.1)' },
+  disabled: { color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.1)' },
+  exhausted: { color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.1)' },
+  error: { color: '#fb7185', bg: 'rgba(251, 113, 133, 0.1)' },
+  pending_verification: { color: '#a5b4fc', bg: 'rgba(165, 180, 252, 0.1)' },
 };
 
 export default function AccountCard({ account, onToggle, onRefresh, onDelete }: Props) {
@@ -42,11 +57,10 @@ export default function AccountCard({ account, onToggle, onRefresh, onDelete }: 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [msg, setMsg] = useState('');
 
-  const statusColor = STATUS_COLORS[account.status] || '#64748b';
+  const badge = STATUS_BADGES[account.status] || { color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.1)' };
   const creditPct = account.credit.limit > 0
-    ? (account.credit.used / account.credit.limit) * 100
+    ? Math.min((account.credit.used / account.credit.limit) * 100, 100)
     : 0;
-  const healthStatus = account.health?.status || account.status;
 
   const reauthWithPuter = async () => {
     setSaving(true);
@@ -59,17 +73,7 @@ export default function AccountCard({ account, onToggle, onRefresh, onDelete }: 
         ? puter.auth.getToken()
         : localStorage.getItem('puter.auth.token.v2');
       if (!token) throw new Error('No Puter token received');
-      await updateAccountToken(account.id, token);
-    } catch (err) {
-      setMsg(err instanceof Error ? err.message : 'Re-auth failed — popup blocked?');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const updateAccountToken = async (id: string, token: string) => {
-    try {
-      const res = await fetch(`/api/accounts/${id}`, {
+      const res = await fetch(`/api/accounts/${account.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, status: 'pending_verification' }),
@@ -81,135 +85,99 @@ export default function AccountCard({ account, onToggle, onRefresh, onDelete }: 
         const data = await res.json();
         setMsg(data.error || 'Failed to update');
       }
-    } catch {
-      setMsg('Network error');
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : 'Re-auth failed — popup blocked?');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div style={{
-      ...styles.card,
-      borderLeftColor: statusColor,
-      borderRightColor: account.status === 'error' ? 'rgba(244, 63, 94, 0.3)' : 'var(--border)',
-      borderTopColor: account.status === 'error' ? 'rgba(244, 63, 94, 0.3)' : 'var(--border)',
-      borderBottomColor: account.status === 'error' ? 'rgba(244, 63, 94, 0.3)' : 'var(--border)',
-    }}>
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <div style={{ ...styles.statusDot, background: statusColor }} />
+    <tr className="table-row-hover" style={styles.row}>
+      <td style={styles.cell}>
+        <div style={styles.accountCell}>
+          <span style={{ ...styles.statusDot, background: badge.color }} />
           <div>
             <div style={styles.name}>{account.name}</div>
             <div style={styles.id}>{account.id}</div>
           </div>
         </div>
-        <span style={{ ...styles.statusLabel, background: `${statusColor}20`, color: statusColor }}>
+      </td>
+      <td style={styles.cell}>
+        <span style={{ ...styles.badge, color: badge.color, background: badge.bg }}>
           {account.status.replace('_', ' ')}
         </span>
-      </div>
-
-      <div style={styles.stats}>
-        <div style={styles.stat}>
-          <span style={styles.statLabel}>Health</span>
-          <span style={{ ...styles.statValue, color: STATUS_COLORS[healthStatus] || '#64748b' }}>
-            {healthStatus}
-          </span>
-        </div>
-        <div style={styles.stat}>
-          <span style={styles.statLabel}>Latency</span>
-          <span style={styles.statValue}>{account.health?.latency?.toFixed(0) || '-'}ms</span>
-        </div>
-        <div style={styles.stat}>
-          <span style={styles.statLabel}>Requests</span>
-          <span style={styles.statValue}>{account.health?.totalRequests || 0}</span>
-        </div>
-        <div style={styles.stat}>
-          <span style={styles.statLabel}>Errors</span>
-          <span style={{ ...styles.statValue, color: account.health?.failedRequests > 0 ? '#ef4444' : undefined }}>
-            {account.health?.failedRequests || 0}
-          </span>
-        </div>
-      </div>
-
-      <div style={styles.creditSection}>
-        <div style={styles.creditHeader}>
-          <span style={styles.creditLabel}>Credit Usage</span>
-          <span style={styles.creditValue}>
-            {account.credit.used} / {account.credit.limit}
-          </span>
-        </div>
-        <div style={styles.barBg}>
-          <div style={{
-            ...styles.barFill,
-            width: `${Math.min(creditPct, 100)}%`,
-            background: creditPct > 80 ? '#ef4444' : creditPct > 50 ? '#f59e0b' : '#22c55e',
-          }} />
-        </div>
-        <div style={styles.remaining}>
-          {account.credit.remaining} remaining
-        </div>
-      </div>
-
-      <div style={styles.actions}>
-        <button onClick={onToggle} style={{
-          ...styles.actionBtn,
-          background: account.status === 'disabled' ? '#22c55e' : '#ef4444',
-        }}>
-          {account.status === 'disabled' ? 'Enable' : 'Disable'}
-        </button>
-        <button onClick={reauthWithPuter} disabled={saving} style={{
-          ...styles.actionBtn,
-          background: '#6366f1',
-        }}>
-          {saving ? 'Re-authenticating...' : 'Re-auth with Puter'}
-        </button>
-        {confirmDelete ? (
-          <div style={styles.deleteConfirm}>
-            <span style={styles.deleteWarning}>Delete?</span>
-            <button onClick={() => { onDelete(); setConfirmDelete(false); }} style={styles.confirmBtn}>Yes</button>
-            <button onClick={() => setConfirmDelete(false)} style={styles.cancelBtn}>No</button>
+      </td>
+      <td style={styles.cell}>
+        <div style={styles.quotaCell}>
+          <div style={styles.quotaTop}>
+            <span style={styles.quotaValue}>
+              {account.credit.remaining.toLocaleString()} <span style={styles.quotaLimit}>/ {account.credit.limit.toLocaleString()}</span>
+            </span>
+            <span style={styles.quotaPct}>{creditPct.toFixed(0)}%</span>
           </div>
-        ) : (
-          <button onClick={() => setConfirmDelete(true)} style={{
-            ...styles.actionBtn,
-            background: '#dc2626',
-          }}>
-            Delete
-          </button>
-        )}
-      </div>
-
-      {msg && (
-        <div style={{ ...styles.msg, color: msg.includes('error') || msg.includes('Failed') || msg.includes('Network') ? '#f43f5e' : '#10b981' }}>
-          {msg}
+          <div style={styles.barBg}>
+            <div style={{
+              ...styles.barFill,
+              width: `${creditPct}%`,
+              background: creditPct > 80 ? '#fb7185' : creditPct > 50 ? '#fbbf24' : '#34d399',
+            }} />
+          </div>
         </div>
-      )}
-    </div>
+      </td>
+      <td style={styles.cell}>
+        <span style={styles.mono}>{account.health?.latency ? `${account.health.latency.toFixed(0)}ms` : '-'}</span>
+      </td>
+      <td style={styles.cell}>
+        <span style={styles.mono}>{account.health?.totalRequests || 0}</span>
+      </td>
+      <td style={styles.cell}>
+        <div style={styles.actions}>
+          <button
+            onClick={onToggle}
+            title={account.status === 'disabled' ? 'Enable' : 'Disable'}
+            style={{ ...styles.iconBtn, ...(account.status === 'disabled' ? styles.iconBtnGreen : styles.iconBtnRed) }}
+          >
+            {account.status === 'disabled' ? <PlayIcon size={14} /> : <PauseCircleIcon size={14} />}
+          </button>
+          <button
+            onClick={reauthWithPuter}
+            disabled={saving}
+            title="Re-auth with Puter"
+            style={{ ...styles.iconBtn, ...styles.iconBtnIndigo }}
+          >
+            <RefreshIcon size={14} className={saving ? 'spin' : undefined} />
+          </button>
+          {confirmDelete ? (
+            <span style={styles.deleteConfirm}>
+              <button onClick={() => { onDelete(); setConfirmDelete(false); }} style={styles.confirmBtn} title="Confirm delete">
+                <CheckIcon size={14} />
+              </button>
+              <button onClick={() => setConfirmDelete(false)} style={styles.cancelBtn} title="Cancel">
+                <XIcon size={14} />
+              </button>
+            </span>
+          ) : (
+            <button onClick={() => setConfirmDelete(true)} title="Delete" style={{ ...styles.iconBtn, ...styles.iconBtnRed }}>
+              <TrashIcon size={14} />
+            </button>
+          )}
+          {msg && <span style={{ ...styles.msg, color: msg.includes('error') || msg.includes('Failed') || msg.includes('Network') ? '#fb7185' : '#34d399' }}>{msg}</span>}
+        </div>
+      </td>
+    </tr>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  card: {
-    background: 'var(--card)',
-    borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderStyle: 'solid',
-    borderColor: 'var(--border)',
-    borderLeftWidth: 4,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 16,
-    backdropFilter: 'blur(8px)',
-    transition: 'transform 0.2s, border-color 0.2s',
+  row: {
+    borderBottom: '1px solid var(--glass-border)',
   },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  cell: {
+    padding: '14px 16px',
+    verticalAlign: 'middle',
   },
-  headerLeft: {
+  accountCell: {
     display: 'flex',
     alignItems: 'center',
     gap: 10,
@@ -221,68 +189,46 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   name: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: 600,
-    color: 'var(--foreground)',
     letterSpacing: '-0.01em',
   },
   id: {
     fontSize: 11,
     color: 'var(--muted-foreground)',
     fontFamily: "'JetBrains Mono', monospace",
+    marginTop: 1,
   },
-  statusLabel: {
+  badge: {
     padding: '4px 10px',
     borderRadius: 9999,
     fontSize: 10,
     fontWeight: 600,
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
+    whiteSpace: 'nowrap',
   },
-  stats: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: 12,
-    padding: '12px 0',
-    borderTop: '1px solid var(--border)',
-    borderBottom: '1px solid var(--border)',
+  quotaCell: {
+    minWidth: 140,
   },
-  stat: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-  },
-  statLabel: {
-    fontSize: 10,
-    fontWeight: 500,
-    color: 'var(--muted-foreground)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  },
-  statValue: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: 'var(--foreground)',
-    fontFamily: "'JetBrains Mono', monospace",
-  },
-  creditSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 8,
-  },
-  creditHeader: {
+  quotaTop: {
     display: 'flex',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  quotaValue: {
     fontSize: 12,
-  },
-  creditLabel: {
-    color: 'var(--muted-foreground)',
-    fontWeight: 500,
-  },
-  creditValue: {
-    color: 'var(--foreground)',
     fontWeight: 600,
     fontFamily: "'JetBrains Mono', monospace",
+  },
+  quotaLimit: {
+    color: 'var(--muted-foreground)',
+    fontWeight: 400,
+  },
+  quotaPct: {
+    fontSize: 10,
+    color: 'var(--muted-foreground)',
   },
   barBg: {
     height: 6,
@@ -295,60 +241,69 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 9999,
     transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
   },
-  remaining: {
-    fontSize: 11,
-    color: 'var(--muted-foreground)',
-    textAlign: 'right',
+  mono: {
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 12,
+    fontWeight: 500,
   },
   actions: {
     display: 'flex',
-    gap: 8,
+    alignItems: 'center',
+    gap: 6,
   },
-  actionBtn: {
-    flex: 1,
-    padding: '8px 16px',
-    borderRadius: 10,
-    border: 'none',
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: 600,
+  iconBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    border: '1px solid var(--glass-border)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     cursor: 'pointer',
+    background: 'var(--input-bg)',
     transition: 'all 0.2s',
   },
-  msg: {
-    fontSize: 12,
-    fontWeight: 500,
-    textAlign: 'center',
+  iconBtnGreen: {
+    color: '#34d399',
+  },
+  iconBtnRed: {
+    color: '#fb7185',
+  },
+  iconBtnIndigo: {
+    color: '#a5b4fc',
   },
   deleteConfirm: {
     display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '0 4px',
-  },
-  deleteWarning: {
-    fontSize: 11,
-    fontWeight: 600,
-    color: '#f43f5e',
+    gap: 4,
   },
   confirmBtn: {
-    padding: '4px 10px',
-    borderRadius: 6,
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     border: 'none',
-    background: '#dc2626',
+    background: '#059669',
     color: '#fff',
-    fontSize: 12,
-    fontWeight: 600,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     cursor: 'pointer',
   },
   cancelBtn: {
-    padding: '4px 10px',
-    borderRadius: 6,
-    border: '1px solid var(--border)',
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    border: '1px solid var(--glass-border)',
     background: 'transparent',
     color: 'var(--muted-foreground)',
-    fontSize: 12,
-    fontWeight: 500,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     cursor: 'pointer',
+  },
+  msg: {
+    fontSize: 11,
+    fontWeight: 500,
+    marginLeft: 4,
+    maxWidth: 160,
   },
 };

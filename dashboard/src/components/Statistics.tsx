@@ -1,3 +1,14 @@
+import {
+  UsersIcon,
+  CheckCircleIcon,
+  PauseCircleIcon,
+  BatteryEmptyIcon,
+  TriangleAlertIcon,
+  ChartLineIcon,
+  ShieldCheckIcon,
+  GaugeIcon,
+} from './icons';
+
 interface Stats {
   totalAccounts: number;
   activeAccounts: number;
@@ -19,53 +30,85 @@ export default function Statistics({ stats }: Props) {
     {
       label: 'Total Accounts',
       value: stats.totalAccounts,
-      color: '#3b82f6',
+      sub: 'configured in pool',
+      color: '#cbd5e1',
+      bg: 'rgba(148, 163, 184, 0.08)',
+      Icon: UsersIcon,
     },
     {
       label: 'Active',
       value: stats.activeAccounts,
-      color: '#22c55e',
+      sub: 'ready to route',
+      color: '#34d399',
+      bg: 'rgba(52, 211, 153, 0.08)',
+      Icon: CheckCircleIcon,
     },
     {
       label: 'Disabled',
       value: stats.disabledAccounts,
-      color: '#64748b',
+      sub: 'manually paused',
+      color: '#94a3b8',
+      bg: 'rgba(148, 163, 184, 0.08)',
+      Icon: PauseCircleIcon,
     },
     {
       label: 'Exhausted',
       value: stats.exhaustedAccounts,
-      color: '#f59e0b',
+      sub: 'quota reached',
+      color: '#fbbf24',
+      bg: 'rgba(251, 191, 36, 0.08)',
+      Icon: BatteryEmptyIcon,
     },
     {
       label: 'Error',
       value: stats.errorAccounts,
-      color: '#ef4444',
+      sub: 'auth or connection',
+      color: '#fb7185',
+      bg: 'rgba(251, 113, 133, 0.08)',
+      Icon: TriangleAlertIcon,
     },
     {
-      label: 'Total Requests',
+      label: 'Requests',
       value: stats.totalRequests.toLocaleString(),
-      color: '#8b5cf6',
+      sub: `${stats.failedRequests} failed requests`,
+      color: '#d8b4fe',
+      bg: 'rgba(216, 180, 254, 0.08)',
+      Icon: ChartLineIcon,
     },
     {
       label: 'Success Rate',
       value: stats.totalRequests > 0
         ? `${((stats.successfulRequests / stats.totalRequests) * 100).toFixed(1)}%`
         : 'N/A',
-      color: '#22c55e',
+      sub: stats.totalRequests > 0
+        ? `${stats.successfulRequests} successful`
+        : 'no traffic yet',
+      color: '#5eead4',
+      bg: 'rgba(94, 234, 212, 0.08)',
+      Icon: ShieldCheckIcon,
     },
     {
       label: 'Avg Latency',
       value: `${stats.averageLatency.toFixed(0)}ms`,
-      color: '#06b6d4',
+      sub: 'response time',
+      color: '#67e8f9',
+      bg: 'rgba(103, 232, 249, 0.08)',
+      Icon: GaugeIcon,
     },
   ];
 
   return (
     <div style={styles.grid}>
       {cards.map(card => (
-        <div key={card.label} style={styles.card}>
-          <div style={styles.label}>{card.label}</div>
-          <div style={{ ...styles.value, color: card.color }}>{card.value}</div>
+        <div key={card.label} className="glass-panel glass-panel-hover" style={styles.card}>
+          <div style={styles.cardTop}>
+            <div style={styles.label}>{card.label}</div>
+            <div style={{ ...styles.iconBox, background: card.bg, color: card.color }}>
+              <card.Icon size={15} />
+            </div>
+          </div>
+          <div style={styles.value}>{card.value}</div>
+          <div style={styles.sub}>{card.sub}</div>
         </div>
       ))}
     </div>
@@ -75,18 +118,30 @@ export default function Statistics({ stats }: Props) {
 const styles: Record<string, React.CSSProperties> = {
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-    gap: 16,
-    marginBottom: 28,
+    gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+    gap: 12,
+    marginBottom: 24,
   },
   card: {
-    background: 'var(--card)',
     borderRadius: 14,
-    padding: '20px 16px',
+    padding: '16px',
     textAlign: 'left',
-    border: '1px solid var(--border)',
-    backdropFilter: 'blur(8px)',
-    transition: 'transform 0.2s, border-color 0.2s',
+    transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s',
+  },
+  cardTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  iconBox: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   label: {
     fontSize: 11,
@@ -94,11 +149,16 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--muted-foreground)',
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
-    marginBottom: 10,
   },
   value: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 700,
     fontFamily: "'JetBrains Mono', monospace",
+    lineHeight: 1.1,
+    marginBottom: 4,
+  },
+  sub: {
+    fontSize: 11,
+    color: 'var(--muted-foreground)',
   },
 };

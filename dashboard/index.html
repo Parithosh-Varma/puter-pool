@@ -8,64 +8,106 @@
     <meta name="description" content="Free AI API with no limits — pool your Puter accounts and route requests across 400+ models automatically." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5555619941305353" crossorigin="anonymous"></script>
     <script async src="https://fundingchoicesmessages.google.com/i/pub-5555619941305353?ers=1"></script>
     <script src="https://js.puter.com/v2/"></script>
     <style>
       :root {
-        --background: 240 10% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 240 10% 3.9%;
-        --card-foreground: 0 0% 98%;
+        --background: 222 47% 5%;
+        --foreground: 210 40% 98%;
+        --card: 217 33% 17%;
+        --card-foreground: 210 40% 98%;
         --primary: 239 84% 67%;
         --primary-foreground: 0 0% 100%;
-        --secondary: 240 3.7% 15.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 240 3.7% 15.9%;
-        --muted-foreground: 240 5% 64.9%;
-        --accent: 240 3.7% 15.9%;
+        --secondary: 215 25% 15%;
+        --secondary-foreground: 210 40% 98%;
+        --muted: 215 25% 15%;
+        --muted-foreground: 215 20% 65%;
+        --accent: 215 25% 15%;
         --destructive: 0 62.8% 30.6%;
         --destructive-foreground: 0 0% 98%;
-        --border: 240 3.7% 15.9%;
-        --input: 240 3.7% 15.9%;
+        --border: 217 33% 17%;
+        --input: 217 33% 17%;
         --ring: 239 84% 67%;
         --radius: 0.5rem;
         --chart-grid: hsl(0 0% 100% / 0.04);
-        --chart-tooltip-bg: hsl(240 10% 3.9%);
+        --chart-tooltip-bg: hsl(222 47% 5%);
         --scroll-thumb: rgba(255, 255, 255, 0.08);
         --scroll-thumb-hover: rgba(255, 255, 255, 0.15);
+        --glass-bg: rgba(15, 23, 42, 0.75);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-hover-border: rgba(99, 102, 241, 0.3);
+        --table-hover: rgba(255, 255, 255, 0.03);
+        --input-bg: rgba(255, 255, 255, 0.04);
       }
       :root[data-theme="light"] {
-        --background: 0 0% 100%;
-        --foreground: 240 10% 3.9%;
+        --background: 210 40% 98%;
+        --foreground: 222 47% 11%;
         --card: 0 0% 100%;
-        --card-foreground: 240 10% 3.9%;
+        --card-foreground: 222 47% 11%;
         --primary: 239 84% 67%;
         --primary-foreground: 0 0% 100%;
-        --secondary: 240 4.8% 95.9%;
-        --secondary-foreground: 240 5.9% 10%;
-        --muted: 240 4.8% 95.9%;
-        --muted-foreground: 240 3.8% 46.1%;
-        --accent: 240 4.8% 95.9%;
+        --secondary: 210 40% 96%;
+        --secondary-foreground: 222 47% 11%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 16% 47%;
+        --accent: 210 40% 96%;
         --destructive: 0 84.2% 60.2%;
         --destructive-foreground: 0 0% 98%;
-        --border: 240 5.9% 90%;
-        --input: 240 5.9% 90%;
+        --border: 214 32% 91%;
+        --input: 0 0% 100%;
         --ring: 239 84% 67%;
         --radius: 0.5rem;
         --chart-grid: rgba(0, 0, 0, 0.05);
         --chart-tooltip-bg: #ffffff;
         --scroll-thumb: rgba(0, 0, 0, 0.1);
         --scroll-thumb-hover: rgba(0, 0, 0, 0.2);
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(0, 0, 0, 0.08);
+        --glass-hover-border: rgba(99, 102, 241, 0.4);
+        --table-hover: rgba(0, 0, 0, 0.02);
+        --input-bg: rgba(0, 0, 0, 0.03);
       }
       body {
         margin: 0;
         background-color: hsl(var(--background));
         color: hsl(var(--foreground));
-        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         overflow-x: hidden;
         transition: background-color 0.3s, color 0.3s;
+      }
+      .glass-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+        border-radius: 14px;
+      }
+      .glass-panel-hover:hover {
+        border-color: var(--glass-hover-border);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      .glass-input {
+        background: var(--input-bg) !important;
+        border: 1px solid var(--glass-border) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+      .glass-input:focus {
+        border-color: var(--ring) !important;
+        box-shadow: 0 0 0 3px hsl(var(--ring) / 0.2);
+        outline: none;
+      }
+      .table-row-hover:hover {
+        background: var(--table-hover);
+      }
+      .text-gradient {
+        background: linear-gradient(to right, #818cf8, #c084fc);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
       }
       .ad-slot {
         display: flex;
@@ -102,9 +144,16 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }
+      .spin {
+        animation: spin 1s linear infinite;
+      }
       @keyframes pulse {
         0%, 100% { opacity: 1; transform: scale(1); }
         50% { opacity: 0.4; transform: scale(0.9); }
+      }
+      @keyframes ping {
+        0% { transform: scale(1); opacity: 0.8; }
+        75%, 100% { transform: scale(2.4); opacity: 0; }
       }
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(8px); }

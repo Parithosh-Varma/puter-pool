@@ -1,4 +1,5 @@
 import AccountCard from './AccountCard';
+import { InboxIcon, KeyIcon } from './icons';
 
 interface Account {
   id: string;
@@ -32,78 +33,113 @@ interface Props {
 export default function AccountList({ accounts, onToggle, onRefresh, onDelete }: Props) {
   if (accounts.length === 0) {
     return (
-      <div style={styles.empty}>
-        <div style={styles.emptyIcon}>
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-            <rect x="4" y="10" width="40" height="30" rx="4" stroke="#64748b" strokeWidth="2" fill="none"/>
-            <path d="M4 14l20 14 20-14" stroke="#64748b" strokeWidth="2" fill="none"/>
-          </svg>
+      <div className="glass-panel" style={styles.empty}>
+        <div style={styles.emptyIconBox}>
+          <InboxIcon size={28} />
         </div>
-        <p style={styles.emptyText}>No accounts configured</p>
-        <p style={styles.emptyHint}>Add accounts via the REST API or environment variables</p>
+        <p style={styles.emptyTitle}>No accounts in the pool</p>
+        <p style={styles.emptyText}>
+          Add accounts to start routing AI requests across them automatically.
+        </p>
       </div>
     );
   }
 
   return (
-    <div>
-      <h2 style={styles.heading}>
-        Accounts
-        <span style={styles.count}>{accounts.length}</span>
-      </h2>
-      <div style={styles.grid}>
-        {accounts.map(account => (
-          <AccountCard
-            key={account.id}
-            account={account}
-            onToggle={() => onToggle(account.id, account.status)}
-            onRefresh={onRefresh}
-            onDelete={() => onDelete(account.id)}
-          />
-        ))}
+    <div className="glass-panel" style={styles.wrap}>
+      <div style={styles.tableWrap}>
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              {['Account Label', 'Status', 'Remaining Quota', 'Avg Latency', 'Total Requests', 'Actions'].map(h => (
+                <th key={h} style={styles.th}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {accounts.map(account => (
+              <AccountCard
+                key={account.id}
+                account={account}
+                onToggle={() => onToggle(account.id, account.status)}
+                onRefresh={onRefresh}
+                onDelete={() => onDelete(account.id)}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={styles.footer}>
+        <KeyIcon size={13} />
+        <span>Credentials are stored server-side. Tokens never leave your machine during routing.</span>
       </div>
     </div>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  heading: {
-    fontSize: 18,
+  wrap: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  tableWrap: {
+    overflowX: 'auto',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    minWidth: 760,
+  },
+  th: {
+    textAlign: 'left',
+    padding: '14px 16px',
+    fontSize: 10,
     fontWeight: 600,
-    color: 'hsl(var(--foreground))',
-    marginBottom: 16,
+    color: 'var(--muted-foreground)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    borderBottom: '1px solid var(--glass-border)',
+    whiteSpace: 'nowrap',
+  },
+  footer: {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-  },
-  count: {
-    fontSize: 13,
-    fontWeight: 500,
-    color: 'hsl(var(--muted-foreground))',
-    background: 'hsl(var(--secondary))',
-    padding: '2px 8px',
-    borderRadius: 10,
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-    gap: 12,
+    padding: '12px 16px',
+    fontSize: 11,
+    color: 'var(--muted-foreground)',
+    borderTop: '1px solid var(--glass-border)',
   },
   empty: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+    padding: '48px 24px',
     textAlign: 'center',
-    padding: 48,
-    color: 'hsl(var(--muted-foreground))',
+    borderRadius: 14,
+    marginBottom: 24,
   },
-  emptyIcon: {
-    fontSize: 48,
+  emptyIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    background: 'rgba(99, 102, 241, 0.12)',
+    color: '#818cf8',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: 500,
-    marginBottom: 8,
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: 600,
+    margin: 0,
   },
-  emptyHint: {
-    fontSize: 14,
+  emptyText: {
+    fontSize: 13,
+    color: 'var(--muted-foreground)',
+    margin: 0,
   },
 };

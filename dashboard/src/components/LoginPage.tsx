@@ -47,7 +47,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     minHeight: '100vh',
     background: 'var(--background)',
-    fontFamily: "'Outfit', -apple-system, sans-serif",
+    fontFamily: "'Inter', -apple-system, sans-serif",
   },
   card: {
     background: 'var(--card)',
