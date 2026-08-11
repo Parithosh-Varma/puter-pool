@@ -10,7 +10,7 @@ import AddAccountForm from './components/AddAccountForm';
 import Chat from './components/Chat';
 import LoginPage from './components/LoginPage';
 import AdSlot from './components/AdSlot';
-import { SunIcon, MoonIcon, GithubIcon } from './components/icons';
+import { SunIcon, MoonIcon, GithubIcon, RefreshIcon } from './components/icons';
 
 type Tab = 'dashboard' | 'chat';
 
@@ -28,6 +28,8 @@ function AppContent() {
     dashboardData,
     stats,
     loading,
+    refreshing,
+    lastUpdated,
     error,
     refreshInterval,
     setRefreshInterval,
@@ -36,11 +38,19 @@ function AppContent() {
     setStrategy,
     refetch,
   } = useApi(idToken);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const updatedAgo = lastUpdated ? Math.max(0, Math.round((now - lastUpdated) / 1000)) : null;
 
   if (!user) {
     return <LoginPage />;
@@ -75,7 +85,7 @@ function AppContent() {
           )}
         </div>
         <div style={styles.headerRight}>
-          {user && (
+          {user && user.uid !== 'local' && (
             <div style={styles.userBadge}>
               {user.picture ? <img src={user.picture} style={styles.userAvatar} /> : null}
               <span style={styles.userName}>{user.name || user.email}</span>
@@ -110,19 +120,30 @@ function AppContent() {
             >Chat</button>
           </div>
           {tab === 'dashboard' && (
-            <label style={styles.refreshLabel}>
-              Refresh:
+            <div style={styles.refreshGroup}>
               <select
                 value={refreshInterval}
                 onChange={e => setRefreshInterval(Number(e.target.value))}
                 style={styles.refreshSelect}
+                title="Auto-refresh interval"
               >
                 <option value={2000}>2s</option>
                 <option value={5000}>5s</option>
                 <option value={10000}>10s</option>
                 <option value={30000}>30s</option>
               </select>
-            </label>
+              <button
+                onClick={refetch}
+                style={{ ...styles.refreshBtn, animation: refreshing ? 'spin 0.8s linear infinite' : undefined }}
+                title="Refresh now"
+                aria-label="Refresh now"
+              >
+                <RefreshIcon size={16} />
+              </button>
+              {updatedAgo !== null && (
+                <span style={styles.updatedAgo}>Updated {updatedAgo}s ago</span>
+              )}
+            </div>
           )}
         </div>
       </header>

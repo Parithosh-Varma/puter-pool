@@ -7,6 +7,16 @@ interface AuthContextValue {
   logout: () => void;
 }
 
+const AUTH_REQUIRED = import.meta.env.VITE_REQUIRE_AUTH === 'true';
+
+const LOCAL_USER = { uid: 'local', email: null, name: 'Local', picture: null };
+
+function initialUser(): AuthContextValue['user'] {
+  const stored = localStorage.getItem('auth_user');
+  if (stored) return JSON.parse(stored);
+  return AUTH_REQUIRED ? null : LOCAL_USER;
+}
+
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   idToken: null,
@@ -15,10 +25,7 @@ const AuthContext = createContext<AuthContextValue>({
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthContextValue['user']>(() => {
-    const stored = localStorage.getItem('auth_user');
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [user, setUser] = useState<AuthContextValue['user']>(initialUser);
   const [idToken, setIdToken] = useState<string | null>(() => localStorage.getItem('auth_token'));
 
   const setAuth = (u: AuthContextValue['user'], token: string) => {
@@ -29,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    setUser(null);
+    setUser(AUTH_REQUIRED ? null : LOCAL_USER);
     setIdToken(null);
     localStorage.removeItem('auth_user');
     localStorage.removeItem('auth_token');

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface Account {
   id: string;
@@ -42,29 +42,29 @@ export default function AccountCard({ account, onToggle, onRefresh, onDelete }: 
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [msg, setMsg] = useState('');
 
-  useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type === 'puter-auth' && e.data?.token) {
-        const id = e.data.accountId || account.id;
-        updateAccountToken(id, e.data.token);
-      }
-    };
-    window.addEventListener('message', handler);
-  }, [account.id]);
-
   const statusColor = STATUS_COLORS[account.status] || '#64748b';
   const creditPct = account.credit.limit > 0
     ? (account.credit.used / account.credit.limit) * 100
     : 0;
   const healthStatus = account.health?.status || account.status;
 
-  const reauthWithPuter = () => {
+  const reauthWithPuter = async () => {
     setSaving(true);
     setMsg('');
-    const origin = window.location.origin;
-    const callbackUrl = `${origin}/puter-callback.html?account=${encodeURIComponent(account.id)}`;
-    const authUrl = `https://puter.com/?action=authme&redirectURL=${encodeURIComponent(callbackUrl)}`;
-    window.open(authUrl, 'puter-auth', 'width=600,height=700');
+    try {
+      const puter = (window as any).puter;
+      if (!puter?.auth) throw new Error('Puter.js failed to load');
+      await puter.auth.signIn();
+      const token = puter.auth.getToken
+        ? puter.auth.getToken()
+        : localStorage.getItem('puter.auth.token.v2');
+      if (!token) throw new Error('No Puter token received');
+      await updateAccountToken(account.id, token);
+    } catch (err) {
+      setMsg(err instanceof Error ? err.message : 'Re-auth failed — popup blocked?');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const updateAccountToken = async (id: string, token: string) => {

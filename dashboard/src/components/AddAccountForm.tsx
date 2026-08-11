@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface Props {
   onAdded: () => void;
+}
+
+function getPuterToken(puter: any): string | null {
+  if (puter?.auth?.getToken) return puter.auth.getToken();
+  return localStorage.getItem('puter.auth.token.v2');
 }
 
 export default function AddAccountForm({ onAdded }: Props) {
@@ -10,31 +15,28 @@ export default function AddAccountForm({ onAdded }: Props) {
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
 
-  useEffect(() => {
-    const handler = (e: MessageEvent) => {
-      if (e.data?.type === 'puter-auth' && e.data?.token) {
-        const accountName = e.data.accountName || name.trim();
-        if (!accountName) {
-          setMessage('Enter an account name first');
-          setIsError(true);
-          return;
-        }
-        submitToken(accountName, e.data.token);
-      }
-    };
-    window.addEventListener('message', handler);
-  }, [name]);
-
-  const signInWithPuter = () => {
+  const signInWithPuter = async () => {
     if (!name.trim()) {
       setMessage('Enter an account name first');
       setIsError(true);
       return;
     }
-    const origin = window.location.origin;
-    const callbackUrl = `${origin}/puter-callback.html?name=${encodeURIComponent(name.trim())}`;
-    const authUrl = `https://puter.com/?action=authme&redirectURL=${encodeURIComponent(callbackUrl)}`;
-    window.open(authUrl, 'puter-auth', 'width=600,height=700');
+    setSaving(true);
+    setMessage('');
+    setIsError(false);
+    try {
+      const puter = (window as any).puter;
+      if (!puter?.auth) throw new Error('Puter.js failed to load');
+      await puter.auth.signIn();
+      const token = getPuterToken(puter);
+      if (!token) throw new Error('No Puter token received');
+      await submitToken(name.trim(), token);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Sign-in failed — popup blocked?');
+      setIsError(true);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const submitToken = async (accountName: string, token: string) => {
@@ -77,7 +79,7 @@ export default function AddAccountForm({ onAdded }: Props) {
           placeholder="Account name (e.g. My Account)"
           style={styles.input}
         />
-        <button onClick={signInWithPuter} disabled={saving || !name.trim()} style={styles.puterBtn}>
+        <button onClick={signInWithPuter} disabled={saving} style={styles.puterBtn}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ marginRight: 8 }}>
             <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" stroke="currentColor" strokeWidth="2" fill="none"/>
             <path d="M12 12l-8-4 8-4 8 4-8 4z" fill="currentColor" opacity="0.3"/>

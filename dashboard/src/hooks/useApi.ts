@@ -72,10 +72,13 @@ export function useApi(idToken: string | null) {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [stats, setStats] = useState<PoolStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshInterval, setRefreshInterval] = useState<number>(5000);
 
   const fetchData = useCallback(async () => {
+    setRefreshing(true);
     try {
       const headers = authHeaders(idToken);
       const [dashboardRes, statsRes] = await Promise.all([
@@ -94,6 +97,7 @@ export function useApi(idToken: string | null) {
 
       setDashboardData(dashboard);
       setStats(poolStats);
+      setLastUpdated(Date.now());
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Connection error');
@@ -160,6 +164,8 @@ export function useApi(idToken: string | null) {
     dashboardData,
     stats,
     loading,
+    refreshing,
+    lastUpdated,
     error,
     refreshInterval,
     setRefreshInterval,

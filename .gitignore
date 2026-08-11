@@ -9,3 +9,4 @@ dashboard/dist/
 dashboard/node_modules/
 
 .DS_Store
+public/

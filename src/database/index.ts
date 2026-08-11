@@ -1,9 +1,6 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const WebSocket = require('ws');
+import { Pool, PoolClient } from 'pg';
 import { RequestRecord } from '../types';
 import { getLogger } from '../logger';
-import { getConfig } from '../config';
 
 interface ResponseRow {
   id: string;
@@ -32,52 +29,58 @@ interface AccountRow {
 }
 
 export class Database {
-  private client: SupabaseClient | null = null;
-  private responsesTable = 'ai_responses';
-  private accountsTable = 'puter_accounts';
+  private pool: Pool | null = null;
 
   initialize(): void {
-    const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_PUBLISHABLE_KEY;
-    if (!url || !key) {
-      getLogger().warn('Database', 'Supabase not configured');
+    const url = process.env.NEON_DATABASE_URL;
+    if (!url) {
+      getLogger().warn('Database', 'NEON_DATABASE_URL not configured');
       return;
     }
-    this.client = createClient(url, key, {
-      realtime: { transport: WebSocket },
-    });
+    this.pool = new Pool({ connectionString: url });
   }
 
   isConnected(): boolean {
-    return this.client !== null;
+    return this.pool !== null;
+  }
+
+  private async withClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+    if (!this.pool) throw new Error('Database not initialized');
+    const client = await this.pool.connect();
+    try {
+      return await fn(client);
+    } finally {
+      client.release();
+    }
   }
 
   // ── Response persistence ──
 
   async storeResponse(record: RequestRecord): Promise<void> {
-    if (!this.client) return;
-    const log = getLogger();
-
     try {
-      const { error } = await this.client.from(this.responsesTable).insert({
-        id: record.id,
-        account_id: record.accountId,
-        model: record.model,
-        prompt: record.prompt,
-        response: record.response,
-        latency_ms: record.latency,
-        success: record.success,
-        retry_count: record.retryCount,
-        status_code: record.statusCode,
-        error_message: record.error,
-        created_at: record.timestamp.toISOString(),
-      });
-
-      if (error) {
-        log.error('Database', 'Failed to insert response', { error: error.message, requestId: record.id });
-      }
+      await this.withClient(client =>
+        client.query(
+          `INSERT INTO ai_responses
+             (id, account_id, model, prompt, response, latency_ms, success, retry_count, status_code, error_message, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+           ON CONFLICT (id) DO NOTHING`,
+          [
+            record.id,
+            record.accountId,
+            record.model,
+            record.prompt,
+            record.response,
+            record.latency,
+            record.success,
+            record.retryCount,
+            record.statusCode,
+            record.error,
+            record.timestamp.toISOString(),
+          ],
+        ),
+      );
     } catch (err) {
-      log.error('Database', 'Failed to store response', {
+      getLogger().error('Database', 'Failed to store response', {
         error: err instanceof Error ? err.message : String(err),
         requestId: record.id,
       });
@@ -85,38 +88,37 @@ export class Database {
   }
 
   async getResponses(limit = 50, offset = 0): Promise<ResponseRow[]> {
-    if (!this.client) return [];
-
-    const { data, error } = await this.client
-      .from(this.responsesTable)
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (error) {
-      getLogger().error('Database', 'Failed to query responses', { error: error.message });
+    try {
+      const res = await this.withClient(client =>
+        client.query(
+          'SELECT * FROM ai_responses ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+          [limit, offset],
+        ),
+      );
+      return res.rows as ResponseRow[];
+    } catch (err) {
+      getLogger().error('Database', 'Failed to query responses', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return [];
     }
-
-    return (data as ResponseRow[]) || [];
   }
 
   async getResponsesByAccount(accountId: string, limit = 50): Promise<ResponseRow[]> {
-    if (!this.client) return [];
-
-    const { data, error } = await this.client
-      .from(this.responsesTable)
-      .select('*')
-      .eq('account_id', accountId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
-
-    if (error) {
-      getLogger().error('Database', 'Failed to query responses by account', { error: error.message });
+    try {
+      const res = await this.withClient(client =>
+        client.query(
+          'SELECT * FROM ai_responses WHERE account_id = $1 ORDER BY created_at DESC LIMIT $2',
+          [accountId, limit],
+        ),
+      );
+      return res.rows as ResponseRow[];
+    } catch (err) {
+      getLogger().error('Database', 'Failed to query responses by account', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return [];
     }
-
-    return (data as ResponseRow[]) || [];
   }
 
   async getResponseStats(): Promise<{
@@ -125,94 +127,98 @@ export class Database {
     failed: number;
     avgLatency: number;
   }> {
-    if (!this.client) return { total: 0, successful: 0, failed: 0, avgLatency: 0 };
-
-    const { data, error } = await this.client
-      .from(this.responsesTable)
-      .select('success, latency_ms');
-
-    if (error) {
-      getLogger().error('Database', 'Failed to get stats', { error: error.message });
+    try {
+      const res = await this.withClient(client =>
+        client.query('SELECT success, latency_ms FROM ai_responses'),
+      );
+      const rows = res.rows as Array<{ success: boolean; latency_ms: number }>;
+      const total = rows.length;
+      const successful = rows.filter(r => r.success).length;
+      const totalLatency = rows.reduce((sum, r) => sum + (r.latency_ms || 0), 0);
+      return {
+        total,
+        successful,
+        failed: total - successful,
+        avgLatency: total > 0 ? Math.round(totalLatency / total) : 0,
+      };
+    } catch (err) {
+      getLogger().error('Database', 'Failed to get stats', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return { total: 0, successful: 0, failed: 0, avgLatency: 0 };
     }
-
-    const rows = (data as Array<{ success: boolean; latency_ms: number }>) || [];
-    const total = rows.length;
-    const successful = rows.filter(r => r.success).length;
-    const totalLatency = rows.reduce((sum, r) => sum + (r.latency_ms || 0), 0);
-
-    return {
-      total,
-      successful,
-      failed: total - successful,
-      avgLatency: total > 0 ? Math.round(totalLatency / total) : 0,
-    };
   }
 
   // ── Account persistence ──
 
   async loadAccounts(): Promise<Array<{ id: string; name: string; token: string; dailyCreditLimit: number }>> {
-    if (!this.client) return [];
-
-    const { data, error } = await this.client
-      .from(this.accountsTable)
-      .select('*')
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      getLogger().error('Database', 'Failed to load accounts', { error: error.message });
+    try {
+      const res = await this.withClient(client =>
+        client.query('SELECT * FROM puter_accounts ORDER BY created_at ASC'),
+      );
+      return ((res.rows as AccountRow[]) || []).map(r => ({
+        id: r.id,
+        name: r.name,
+        token: r.token,
+        dailyCreditLimit: r.daily_credit_limit,
+      }));
+    } catch (err) {
+      getLogger().error('Database', 'Failed to load accounts', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return [];
     }
-
-    return ((data as AccountRow[]) || []).map(r => ({
-      id: r.id,
-      name: r.name,
-      token: r.token,
-      dailyCreditLimit: r.daily_credit_limit,
-    }));
   }
 
   async saveAccount(account: { id: string; name: string; token: string; dailyCreditLimit: number }): Promise<void> {
-    if (!this.client) return;
-    const log = getLogger();
-
-    const { error } = await this.client.from(this.accountsTable).upsert({
-      id: account.id,
-      name: account.name,
-      token: account.token,
-      daily_credit_limit: account.dailyCreditLimit,
-      status: 'pending_verification',
-      updated_at: new Date().toISOString(),
-    });
-
-    if (error) {
-      log.error('Database', 'Failed to save account', { error: error.message, accountId: account.id });
+    try {
+      await this.withClient(client =>
+        client.query(
+          `INSERT INTO puter_accounts (id, name, token, daily_credit_limit, status, updated_at)
+           VALUES ($1, $2, $3, $4, 'pending_verification', NOW())
+           ON CONFLICT (id) DO UPDATE
+             SET name = EXCLUDED.name,
+                 token = EXCLUDED.token,
+                 daily_credit_limit = EXCLUDED.daily_credit_limit,
+                 status = 'pending_verification',
+                 updated_at = NOW()`,
+          [account.id, account.name, account.token, account.dailyCreditLimit],
+        ),
+      );
+    } catch (err) {
+      getLogger().error('Database', 'Failed to save account', {
+        error: err instanceof Error ? err.message : String(err),
+        accountId: account.id,
+      });
     }
   }
 
   async deleteAccount(id: string): Promise<void> {
-    if (!this.client) return;
-
-    const { error } = await this.client
-      .from(this.accountsTable)
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      getLogger().error('Database', 'Failed to delete account', { error: error.message, accountId: id });
+    try {
+      await this.withClient(client =>
+        client.query('DELETE FROM puter_accounts WHERE id = $1', [id]),
+      );
+    } catch (err) {
+      getLogger().error('Database', 'Failed to delete account', {
+        error: err instanceof Error ? err.message : String(err),
+        accountId: id,
+      });
     }
   }
 
   async updateAccountStatus(id: string, status: string): Promise<void> {
-    if (!this.client) return;
-
-    const { error } = await this.client
-      .from(this.accountsTable)
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('id', id);
-
-    if (error) {
-      getLogger().error('Database', 'Failed to update account status', { error: error.message, accountId: id });
+    try {
+      await this.withClient(client =>
+        client.query(
+          'UPDATE puter_accounts SET status = $1, updated_at = NOW() WHERE id = $2',
+          [status, id],
+        ),
+      );
+    } catch (err) {
+      getLogger().error('Database', 'Failed to update account status', {
+        error: err instanceof Error ? err.message : String(err),
+        accountId: id,
+      });
     }
   }
 }
