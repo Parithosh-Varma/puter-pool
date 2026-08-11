@@ -72,11 +72,11 @@ export default function UsageGraph({ requests, theme = 'dark' }: Props) {
           <ResponsiveContainer width="100%" height={200} key={theme}>
             <LineChart data={latencyData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-              <XAxis dataKey="index" tick={false} stroke="var(--text-secondary)" />
-              <YAxis stroke="var(--text-secondary)" fontSize={10} />
+              <XAxis dataKey="index" tick={false} stroke="var(--muted-foreground)" />
+              <YAxis stroke="var(--muted-foreground)" fontSize={10} />
               <Tooltip
-                contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--card-border)', borderRadius: 12 }}
-                labelStyle={{ color: 'var(--text-secondary)' }}
+                contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--border)', borderRadius: 12 }}
+                labelStyle={{ color: 'var(--muted-foreground)' }}
               />
               <Line
                 type="monotone"
@@ -93,10 +93,10 @@ export default function UsageGraph({ requests, theme = 'dark' }: Props) {
           <ResponsiveContainer width="100%" height={200} key={theme}>
             <BarChart data={modelData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-              <XAxis dataKey="model" stroke="var(--text-secondary)" fontSize={9} />
-              <YAxis stroke="var(--text-secondary)" fontSize={10} />
+              <XAxis dataKey="model" stroke="var(--muted-foreground)" fontSize={9} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={10} />
               <Tooltip
-                contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--card-border)', borderRadius: 12 }}
+                contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--border)', borderRadius: 12 }}
               />
               <Bar dataKey="count" fill="#818cf8" radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -107,10 +107,10 @@ export default function UsageGraph({ requests, theme = 'dark' }: Props) {
           <ResponsiveContainer width="100%" height={200} key={theme}>
             <BarChart data={pieData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-              <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={10} />
-              <YAxis stroke="var(--text-secondary)" fontSize={10} />
+              <XAxis dataKey="name" stroke="var(--muted-foreground)" fontSize={10} />
+              <YAxis stroke="var(--muted-foreground)" fontSize={10} />
               <Tooltip
-                contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--card-border)', borderRadius: 12 }}
+                contentStyle={{ background: 'var(--chart-tooltip-bg)', border: '1px solid var(--border)', borderRadius: 12 }}
               />
               <Legend />
               <Bar dataKey="value" name="Requests" radius={[4, 4, 0, 0]}>
@@ -133,7 +133,7 @@ const styles: Record<string, React.CSSProperties> = {
   heading: {
     fontSize: 18,
     fontWeight: 600,
-    color: 'var(--text-primary)',
+    color: 'var(--foreground)',
     marginBottom: 16,
     letterSpacing: '-0.01em',
   },
@@ -143,16 +143,16 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 20,
   },
   chartCard: {
-    background: 'var(--card-bg)',
+    background: 'var(--card)',
     borderRadius: 16,
     padding: 20,
-    border: '1px solid var(--card-border)',
+    border: '1px solid var(--border)',
     backdropFilter: 'blur(8px)',
   },
   chartTitle: {
     fontSize: 11,
     fontWeight: 600,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     marginBottom: 16,
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
@@ -160,10 +160,10 @@ const styles: Record<string, React.CSSProperties> = {
   empty: {
     textAlign: 'center',
     padding: 48,
-    color: 'var(--text-secondary)',
-    background: 'var(--card-bg)',
+    color: 'var(--muted-foreground)',
+    background: 'var(--card)',
     borderRadius: 16,
-    border: '1px solid var(--card-border)',
+    border: '1px solid var(--border)',
     marginBottom: 32,
   },
   emptyText: {

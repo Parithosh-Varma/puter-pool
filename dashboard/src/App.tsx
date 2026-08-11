@@ -9,12 +9,20 @@ import StrategyControl from './components/StrategyControl';
 import AddAccountForm from './components/AddAccountForm';
 import Chat from './components/Chat';
 import LoginPage from './components/LoginPage';
+import AdSlot from './components/AdSlot';
+import { SunIcon, MoonIcon, GithubIcon } from './components/icons';
 
 type Tab = 'dashboard' | 'chat';
 
+function getInitialTheme(): 'dark' | 'light' {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark' || saved === 'light') return saved;
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
 function AppContent() {
   const [tab, setTab] = useState<Tab>('dashboard');
-  const [theme, setTheme] = useState<'dark' | 'light'>((localStorage.getItem('theme') as 'dark' | 'light') || 'dark');
+  const [theme, setTheme] = useState<'dark' | 'light'>(getInitialTheme);
   const { user, idToken, logout } = useAuth();
   const {
     dashboardData,
@@ -51,6 +59,11 @@ function AppContent() {
     <div style={styles.container}>
       <header style={styles.header}>
         <div style={styles.headerLeft}>
+          <img
+            src="https://avatars.githubusercontent.com/u/277201506?v=4&size=64"
+            alt="logo"
+            style={styles.logo}
+          />
           <h1 style={styles.title}>Puter Account Pool</h1>
           {stats && (
             <span style={{
@@ -69,12 +82,22 @@ function AppContent() {
               <button onClick={logout} style={styles.logoutBtn}>Logout</button>
             </div>
           )}
+          <a
+            href="https://github.com/Parithosh-Varma/puter-account-pool-manager-"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={styles.githubBtn}
+          >
+            <GithubIcon size={16} />
+            <span className="github-btn-text">Source</span>
+          </a>
           <button
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             style={styles.themeToggle}
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
           >
-            {theme === 'dark' ? 'Light' : 'Dark'}
+            {theme === 'dark' ? <SunIcon size={16} /> : <MoonIcon size={16} />}
           </button>
           <div style={styles.tabs}>
             <button
@@ -117,6 +140,8 @@ function AppContent() {
         <>
           {stats && <Statistics stats={stats} />}
 
+          <AdSlot slot="1" format="square" />
+
           {dashboardData && (
             <>
               <div style={styles.grid}>
@@ -158,6 +183,12 @@ function AppContent() {
               />
             </>
           )}
+
+          <AdSlot slot="2" format="leaderboard" />
+
+          <footer style={styles.footer}>
+            <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={styles.footerLink}>Privacy Policy</a>
+          </footer>
         </>
       )}
     </div>
@@ -192,7 +223,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: '0 auto',
     padding: '32px 24px',
     fontFamily: "'Outfit', -apple-system, sans-serif",
-    color: 'var(--text-primary)',
+    color: 'var(--foreground)',
     background: 'transparent',
     minHeight: '100vh',
     animation: 'fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -203,14 +234,14 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100vh',
-    background: 'var(--bg-color)',
-    color: 'var(--text-primary)',
+    background: 'var(--background)',
+    color: 'var(--foreground)',
     fontFamily: "'Outfit', -apple-system, sans-serif",
   },
   loadingSpinner: {
     width: 40,
     height: 40,
-    border: '3px solid var(--card-border)',
+    border: '3px solid var(--border)',
     borderTopColor: '#6366f1',
     borderRadius: '50%',
     animation: 'spin 0.8s linear infinite',
@@ -219,7 +250,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 20,
     fontSize: 16,
     fontWeight: 500,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
   },
   header: {
     display: 'flex',
@@ -227,19 +258,42 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     marginBottom: 36,
     paddingBottom: 20,
-    borderBottom: '1px solid var(--card-border)',
+    borderBottom: '1px solid var(--border)',
   },
   headerLeft: {
     display: 'flex',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
+  },
+  logo: {
+    width: 32,
+    height: 32,
+    borderRadius: '50%',
+    objectFit: 'cover',
+    border: '1px solid hsl(var(--border))',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+  },
+  githubBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '8px 14px',
+    fontSize: 13,
+    fontWeight: 500,
+    color: 'hsl(var(--foreground))',
+    border: '1px solid hsl(var(--border))',
+    background: 'hsl(var(--background))',
+    borderRadius: 'var(--radius)',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    transition: 'background-color 0.2s',
   },
   title: {
     margin: 0,
     fontSize: 26,
     fontWeight: 700,
     letterSpacing: '-0.02em',
-    background: 'linear-gradient(135deg, var(--text-primary) 0%, #6366f1 100%)',
+    background: 'linear-gradient(135deg, var(--foreground) 0%, #6366f1 100%)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
   },
@@ -263,14 +317,14 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 10,
     fontSize: 13,
     fontWeight: 500,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
   },
   refreshSelect: {
     padding: '6px 12px',
     borderRadius: 8,
-    border: '1px solid var(--card-border)',
-    background: 'var(--input-bg)',
-    color: 'var(--text-primary)',
+    border: '1px solid var(--border)',
+    background: 'var(--input)',
+    color: 'var(--foreground)',
     fontSize: 13,
     fontWeight: 500,
     outline: 'none',
@@ -278,8 +332,8 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'border-color 0.2s',
   },
   themeToggle: {
-    background: 'var(--card-bg)',
-    border: '1px solid var(--card-border)',
+    background: 'var(--card)',
+    border: '1px solid var(--border)',
     borderRadius: 10,
     width: 38,
     height: 38,
@@ -288,7 +342,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     fontSize: 16,
     cursor: 'pointer',
-    color: 'var(--text-primary)',
+    color: 'var(--foreground)',
     transition: 'all 0.2s',
   },
   errorBar: {
@@ -324,16 +378,16 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 28,
   },
   card: {
-    background: 'var(--card-bg)',
+    background: 'var(--card)',
     borderRadius: 16,
     padding: 24,
-    border: '1px solid var(--card-border)',
+    border: '1px solid var(--border)',
     backdropFilter: 'blur(8px)',
   },
   cardHeader: {
     fontSize: 12,
     fontWeight: 600,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
     marginBottom: 18,
@@ -348,32 +402,32 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: '6px 0',
-    borderBottom: '1px solid var(--border-subtle)',
+    borderBottom: '1px solid var(--border)',
   },
   statLabel: {
     fontSize: 14,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
   },
   statValue: {
     fontSize: 14,
     fontWeight: 600,
-    color: 'var(--text-primary)',
+    color: 'var(--foreground)',
     fontFamily: "'JetBrains Mono', monospace",
   },
   tabs: {
     display: 'flex',
     gap: 6,
-    background: 'var(--panel-bg)',
+    background: 'var(--secondary)',
     borderRadius: 10,
     padding: 4,
-    border: '1px solid var(--card-border)',
+    border: '1px solid var(--border)',
   },
   tab: {
     padding: '6px 16px',
     borderRadius: 7,
     border: 'none',
     background: 'transparent',
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     fontSize: 13,
     fontWeight: 500,
     cursor: 'pointer',
@@ -390,8 +444,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
     padding: '4px 12px',
     borderRadius: 10,
-    background: 'var(--panel-bg)',
-    border: '1px solid var(--card-border)',
+    background: 'var(--secondary)',
+    border: '1px solid var(--border)',
   },
   userAvatar: {
     width: 24,
@@ -401,7 +455,7 @@ const styles: Record<string, React.CSSProperties> = {
   userName: {
     fontSize: 13,
     fontWeight: 500,
-    color: 'var(--text-primary)',
+    color: 'var(--foreground)',
   },
   logoutBtn: {
     padding: '4px 10px',
@@ -412,5 +466,17 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     fontWeight: 600,
     cursor: 'pointer',
+  },
+  footer: {
+    display: 'flex',
+    justifyContent: 'center',
+    padding: '24px 0 8px',
+    borderTop: '1px solid hsl(var(--border))',
+    marginTop: 28,
+  },
+  footerLink: {
+    fontSize: 13,
+    color: 'hsl(var(--muted-foreground))',
+    textDecoration: 'none',
   },
 };

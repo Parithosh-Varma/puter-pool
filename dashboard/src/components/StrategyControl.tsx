@@ -52,7 +52,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   currentLabel: {
     fontSize: 13,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
   },
   currentValue: {
     fontSize: 14,
@@ -62,10 +62,10 @@ const styles: Record<string, React.CSSProperties> = {
   buttons: {
     display: 'flex',
     gap: 8,
-    background: 'var(--panel-bg)',
+    background: 'var(--secondary)',
     padding: 3,
     borderRadius: 10,
-    border: '1px solid var(--card-border)',
+    border: '1px solid var(--border)',
   },
   btn: {
     flex: 1,
@@ -73,7 +73,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 8,
     border: 'none',
     background: 'transparent',
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     fontSize: 13,
     fontWeight: 500,
     cursor: 'pointer',

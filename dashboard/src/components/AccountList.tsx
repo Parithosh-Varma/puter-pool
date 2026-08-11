@@ -70,7 +70,7 @@ const styles: Record<string, React.CSSProperties> = {
   heading: {
     fontSize: 18,
     fontWeight: 600,
-    color: '#e2e8f0',
+    color: 'hsl(var(--foreground))',
     marginBottom: 16,
     display: 'flex',
     alignItems: 'center',
@@ -79,8 +79,8 @@ const styles: Record<string, React.CSSProperties> = {
   count: {
     fontSize: 13,
     fontWeight: 500,
-    color: '#64748b',
-    background: '#1e293b',
+    color: 'hsl(var(--muted-foreground))',
+    background: 'hsl(var(--secondary))',
     padding: '2px 8px',
     borderRadius: 10,
   },
@@ -92,7 +92,7 @@ const styles: Record<string, React.CSSProperties> = {
   empty: {
     textAlign: 'center',
     padding: 48,
-    color: '#64748b',
+    color: 'hsl(var(--muted-foreground))',
   },
   emptyIcon: {
     fontSize: 48,

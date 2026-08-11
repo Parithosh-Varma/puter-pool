@@ -92,9 +92,9 @@ export default function AccountCard({ account, onToggle, onRefresh, onDelete }: 
     <div style={{
       ...styles.card,
       borderLeftColor: statusColor,
-      borderRightColor: account.status === 'error' ? 'rgba(244, 63, 94, 0.3)' : 'var(--card-border)',
-      borderTopColor: account.status === 'error' ? 'rgba(244, 63, 94, 0.3)' : 'var(--card-border)',
-      borderBottomColor: account.status === 'error' ? 'rgba(244, 63, 94, 0.3)' : 'var(--card-border)',
+      borderRightColor: account.status === 'error' ? 'rgba(244, 63, 94, 0.3)' : 'var(--border)',
+      borderTopColor: account.status === 'error' ? 'rgba(244, 63, 94, 0.3)' : 'var(--border)',
+      borderBottomColor: account.status === 'error' ? 'rgba(244, 63, 94, 0.3)' : 'var(--border)',
     }}>
       <div style={styles.header}>
         <div style={styles.headerLeft}>
@@ -191,12 +191,12 @@ export default function AccountCard({ account, onToggle, onRefresh, onDelete }: 
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: 'var(--card-bg)',
+    background: 'var(--card)',
     borderRadius: 16,
     padding: 20,
     borderWidth: 1,
     borderStyle: 'solid',
-    borderColor: 'var(--card-border)',
+    borderColor: 'var(--border)',
     borderLeftWidth: 4,
     display: 'flex',
     flexDirection: 'column',
@@ -223,12 +223,12 @@ const styles: Record<string, React.CSSProperties> = {
   name: {
     fontSize: 15,
     fontWeight: 600,
-    color: 'var(--text-primary)',
+    color: 'var(--foreground)',
     letterSpacing: '-0.01em',
   },
   id: {
     fontSize: 11,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     fontFamily: "'JetBrains Mono', monospace",
   },
   statusLabel: {
@@ -244,8 +244,8 @@ const styles: Record<string, React.CSSProperties> = {
     gridTemplateColumns: '1fr 1fr',
     gap: 12,
     padding: '12px 0',
-    borderTop: '1px solid var(--border-subtle)',
-    borderBottom: '1px solid var(--border-subtle)',
+    borderTop: '1px solid var(--border)',
+    borderBottom: '1px solid var(--border)',
   },
   stat: {
     display: 'flex',
@@ -255,14 +255,14 @@ const styles: Record<string, React.CSSProperties> = {
   statLabel: {
     fontSize: 10,
     fontWeight: 500,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
   statValue: {
     fontSize: 13,
     fontWeight: 600,
-    color: 'var(--text-primary)',
+    color: 'var(--foreground)',
     fontFamily: "'JetBrains Mono', monospace",
   },
   creditSection: {
@@ -276,17 +276,17 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
   },
   creditLabel: {
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     fontWeight: 500,
   },
   creditValue: {
-    color: 'var(--text-primary)',
+    color: 'var(--foreground)',
     fontWeight: 600,
     fontFamily: "'JetBrains Mono', monospace",
   },
   barBg: {
     height: 6,
-    background: 'var(--panel-bg)',
+    background: 'var(--secondary)',
     borderRadius: 9999,
     overflow: 'hidden',
   },
@@ -297,7 +297,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   remaining: {
     fontSize: 11,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     textAlign: 'right',
   },
   actions: {
@@ -344,9 +344,9 @@ const styles: Record<string, React.CSSProperties> = {
   cancelBtn: {
     padding: '4px 10px',
     borderRadius: 6,
-    border: '1px solid var(--card-border)',
+    border: '1px solid var(--border)',
     background: 'transparent',
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     fontSize: 12,
     fontWeight: 500,
     cursor: 'pointer',

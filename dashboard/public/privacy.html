@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — Puter Account Pool Manager</title>
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <style>
+    :root {
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 240 10% 3.9%;
+      --border: 240 3.7% 15.9%;
+      --muted-foreground: 240 5% 64.9%;
+      --primary: 239 84% 67%;
+    }
+    :root[data-theme="light"] {
+      --background: 0 0% 100%;
+      --foreground: 240 10% 3.9%;
+      --card: 0 0% 100%;
+      --border: 240 5.9% 90%;
+      --muted-foreground: 240 3.8% 46.1%;
+      --primary: 239 84% 67%;
+    }
+    body {
+      margin: 0;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.7;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px; }
+    h1 { font-size: 26px; letter-spacing: -0.02em; }
+    h2 { font-size: 18px; margin-top: 32px; }
+    p { color: hsl(var(--muted-foreground)); font-size: 14px; }
+    a { color: hsl(var(--primary)); }
+  </style>
+  <script>
+    try {
+      const saved = localStorage.getItem('theme');
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      if (saved ? saved === 'light' : prefersLight) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Privacy Policy</h1>
+    <p>Last updated: August 2026</p>
+
+    <h2>Overview</h2>
+    <p>Puter Account Pool Manager ("the service") lets you link your Puter accounts and route AI requests through them. This policy explains what data is collected and how it is used.</p>
+
+    <h2>Data we collect</h2>
+    <p>When you sign in with Google, we receive your Google profile name, email address, and profile picture to identify you as the operator of the pool. When you sign in with Puter, the auth token is stored to allow the service to make requests on your behalf. Chat messages you send through the dashboard are forwarded to the AI provider you select.</p>
+
+    <h2>How we use data</h2>
+    <p>Account credentials and tokens are used exclusively to route AI requests across your pooled accounts. Usage statistics (request counts, latency, error rates) are displayed in the dashboard and used for scheduling decisions. We do not sell your data to third parties.</p>
+
+    <h2>Cookies & advertising</h2>
+    <p>This site displays ads served by Google AdSense, which may use cookies to serve and personalize ads. Third-party vendors, including Google, use cookies to serve ads based on prior visits to this and other websites. You can opt out of personalized advertising by visiting Google Ads Settings (<a href="https://adssettings.google.com">adssettings.google.com</a>).</p>
+
+    <h2>Data retention & deletion</h2>
+    <p>You can delete accounts from the pool at any time from the dashboard. To request deletion of your data, contact the site operator via the GitHub repository.</p>
+
+    <h2>Security</h2>
+    <p>Tokens are stored in an encrypted database (Supabase) and are only used server-side to authenticate API requests. They are never exposed in the frontend.</p>
+
+    <h2>Contact</h2>
+    <p>Questions about this policy: open an issue on the GitHub repository.</p>
+  </div>
+</body>
+</html>

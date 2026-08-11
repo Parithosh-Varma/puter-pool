@@ -159,7 +159,7 @@ export default function Chat() {
                     key={m.id}
                     style={{
                       ...styles.dropdownItem,
-                      background: model === m.id ? '#1e293b' : 'transparent',
+                      background: model === m.id ? 'hsl(var(--secondary))' : 'transparent',
                     }}
                     onClick={() => selectModel(m.id)}
                   >
@@ -194,9 +194,9 @@ export default function Chat() {
           }}>
             <div style={{
               ...styles.bubble,
-              background: msg.role === 'user' ? '#6366f1' : 'var(--panel-bg)',
-              border: msg.role === 'user' ? 'none' : '1px solid var(--card-border)',
-              color: msg.role === 'user' ? '#fff' : 'var(--text-primary)',
+              background: msg.role === 'user' ? '#6366f1' : 'var(--secondary)',
+              border: msg.role === 'user' ? 'none' : '1px solid var(--border)',
+              color: msg.role === 'user' ? '#fff' : 'var(--foreground)',
             }}>
               <div style={styles.bubbleText}>{msg.content}</div>
               {(msg.accountId || msg.latency) && (
@@ -239,15 +239,15 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     height: 'calc(100vh - 200px)',
-    background: 'var(--card-bg)',
+    background: 'var(--card)',
     borderRadius: 16,
-    border: '1px solid var(--card-border)',
+    border: '1px solid var(--border)',
     overflow: 'hidden',
     backdropFilter: 'blur(8px)',
   },
   toolbar: {
     padding: '14px 20px',
-    borderBottom: '1px solid var(--border-subtle)',
+    borderBottom: '1px solid var(--border)',
     background: 'rgba(255, 255, 255, 0.02)',
   },
   modelSelector: {
@@ -260,9 +260,9 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     padding: '8px 14px',
     borderRadius: 10,
-    border: '1px solid var(--card-border)',
-    background: 'var(--input-bg)',
-    color: 'var(--text-primary)',
+    border: '1px solid var(--border)',
+    background: 'var(--input)',
+    color: 'var(--foreground)',
     fontSize: 13,
     fontWeight: 500,
     cursor: 'pointer',
@@ -273,7 +273,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   arrow: {
     fontSize: 9,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     marginLeft: 8,
   },
   dropdown: {
@@ -282,8 +282,8 @@ const styles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     marginTop: 6,
-    background: 'var(--input-bg)',
-    border: '1px solid var(--card-border)',
+    background: 'var(--input)',
+    border: '1px solid var(--border)',
     borderRadius: 12,
     zIndex: 100,
     maxHeight: 360,
@@ -294,9 +294,9 @@ const styles: Record<string, React.CSSProperties> = {
   searchInput: {
     padding: '10px 14px',
     border: 'none',
-    borderBottom: '1px solid var(--border-subtle)',
+    borderBottom: '1px solid var(--border)',
     background: 'transparent',
-    color: 'var(--text-primary)',
+    color: 'var(--foreground)',
     fontSize: 13,
     outline: 'none',
   },
@@ -307,7 +307,7 @@ const styles: Record<string, React.CSSProperties> = {
   dropdownItem: {
     padding: '10px 14px',
     cursor: 'pointer',
-    borderBottom: '1px solid var(--border-subtle)',
+    borderBottom: '1px solid var(--border)',
     transition: 'background 0.2s',
   },
   itemTop: {
@@ -319,18 +319,18 @@ const styles: Record<string, React.CSSProperties> = {
   itemName: {
     fontSize: 13,
     fontWeight: 600,
-    color: 'var(--text-primary)',
+    color: 'var(--foreground)',
   },
   itemProvider: {
     fontSize: 10,
     fontWeight: 500,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
   },
   itemDesc: {
     fontSize: 11,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
@@ -344,7 +344,7 @@ const styles: Record<string, React.CSSProperties> = {
   loadingText: {
     padding: 16,
     textAlign: 'center',
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     fontSize: 13,
   },
   messages: {
@@ -375,7 +375,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
     marginTop: 8,
     fontSize: 11,
-    color: 'var(--text-secondary)',
+    color: 'var(--muted-foreground)',
     fontFamily: "'JetBrains Mono', monospace",
   },
   error: {
@@ -388,31 +388,31 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 4,
     padding: '10px 16px',
     alignSelf: 'flex-start',
-    background: 'var(--panel-bg)',
+    background: 'var(--secondary)',
     borderRadius: 16,
-    border: '1px solid var(--card-border)',
+    border: '1px solid var(--border)',
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: '50%',
-    background: 'var(--text-secondary)',
+    background: 'var(--muted-foreground)',
     animation: 'pulse 1.4s infinite',
   },
   inputBar: {
     display: 'flex',
     gap: 10,
     padding: '16px 20px',
-    borderTop: '1px solid var(--border-subtle)',
+    borderTop: '1px solid var(--border)',
     background: 'rgba(255, 255, 255, 0.01)',
   },
   textarea: {
     flex: 1,
     padding: '10px 14px',
     borderRadius: 10,
-    border: '1px solid var(--card-border)',
-    background: 'var(--input-bg)',
-    color: 'var(--text-primary)',
+    border: '1px solid var(--border)',
+    background: 'var(--input)',
+    color: 'var(--foreground)',
     fontSize: 14,
     resize: 'none',
     outline: 'none',

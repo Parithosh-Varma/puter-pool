@@ -2,6 +2,8 @@
 
 **Get a free AI API** for **Claude Fable 5**, **Claude Sonnet 5**, **Gemini 2.5 Pro**, GPT-4o, DeepSeek, and 400+ models by pooling free Puter accounts. **Unlimited AI credits** — no credit card, no rate limits, no token costs.
 
+📂 Source: https://github.com/Parithosh-Varma/puter-account-pool-manager-
+
 Each Puter account comes with free daily AI credits. When one runs out, this tool seamlessly failovers to the next — so you never see `"No usage left for request"` again.
 
 > **SEO keywords:** free AI API · free AI credits · unlimited AI API · free Claude API · free GPT-4 API · free Gemini API · free DeepSeek API · AI API pool · Puter accounts pool · free LLM API · no cost AI API · free AI model router
