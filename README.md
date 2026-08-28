@@ -1,7 +1,7 @@
 # Puter Pool — Free AI API with No Limits 🚀
 
 <p align="center">
-  <img src="logo Background Removed.png" alt="Puter Pool Logo" width="180" />
+  <img src="logo-bg-removed.png" alt="Puter Pool Logo" width="180" />
 </p>
 
 <p align="center">
