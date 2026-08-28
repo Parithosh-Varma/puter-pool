@@ -111,8 +111,7 @@ function AppContent() {
         <div style={s.topbarInner}>
           <div style={s.brand}>
             <div style={s.logoWrap}>
-              <img src="https://avatars.githubusercontent.com/u/277201506?v=4&size=64" alt="" style={s.logo} />
-              <span style={s.logoBolt}>◒</span>
+              <img src="/logo.png" alt="Puter Pool" style={s.logo} />
             </div>
             <div>
               <div style={s.wordmark}>
@@ -159,7 +158,7 @@ function AppContent() {
               {theme === 'dark' ? <SunIcon size={15} /> : <MoonIcon size={15} />}
             </button>
             <button onClick={() => setShowOnboarding(true)} style={s.iconBtn} aria-label="How to use"><HelpCircleIcon size={15} /></button>
-            <a href="https://github.com/Parithosh-Varma/puter-account-pool-manager-" target="_blank" rel="noopener noreferrer" style={s.ghostBtn}>
+            <a href="https://github.com/Parithosh-Varma/puter-pool" target="_blank" rel="noopener noreferrer" style={s.ghostBtn}>
               <GithubIcon size={14} /> <span className="github-btn-text mono" style={{ fontSize: 11 }}>GITHUB</span>
             </a>
           </div>
@@ -182,7 +181,7 @@ function AppContent() {
                 {copied ? 'COPIED ✓' : 'COPY ENDPOINT'}
               </button>
               <div style={s.manifestHint}>
-                Drop-in replacement for OpenAI. Point any SDK here — key is ignored, routing is automatic.
+                Drop-in replacement for OpenAI + Anthropic. Point any SDK here — key is ignored, routing is automatic.
               </div>
             </div>
             <div style={s.sideDivider} />
@@ -253,7 +252,7 @@ function AppContent() {
           <div style={s.sideFooter} className="mono">
             <a href="/privacy.html" target="_blank" rel="noopener noreferrer" style={s.sideLink}>Privacy →</a>
             <span style={{ opacity: 0.3 }}>·</span>
-            <a href="https://github.com/Parithosh-Varma/puter-account-pool-manager-" target="_blank" rel="noopener noreferrer" style={s.sideLink}>Source →</a>
+            <a href="https://github.com/Parithosh-Varma/puter-pool" target="_blank" rel="noopener noreferrer" style={s.sideLink}>Source →</a>
           </div>
         </aside>
 
@@ -434,9 +433,9 @@ const s: Record<string, React.CSSProperties> = {
   topbar: { position: 'sticky', top: 0, zIndex: 30, background: 'var(--card)', borderBottom: '1.5px solid var(--border-strong)', boxShadow: '0 1px 0 rgba(0,0,0,0.04)' },
   topbarInner: { maxWidth: 1440, margin: '0 auto', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' },
   brand: { display: 'flex', alignItems: 'center', gap: 12 },
-  logoWrap: { position: 'relative', width: 44, height: 44, borderRadius: 10, background: 'var(--ink)', border: '1.5px solid var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 },
-  logo: { width: '100%', height: '100%', objectFit: 'cover', opacity: 0.92 },
-  logoBolt: { position: 'absolute', right: 4, bottom: 2, fontSize: 10, color: 'var(--warn)', fontWeight: 900, textShadow: '0 1px 0 black' },
+  logoWrap: { position: 'relative', width: 44, height: 44, borderRadius: 10, background: 'var(--paper)', border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, padding: 4 },
+  logo: { width: '100%', height: '100%', objectFit: 'contain', opacity: 1 },
+  logoBolt: { position: 'absolute', right: 4, bottom: 2, fontSize: 10, color: 'var(--warn)', fontWeight: 900, textShadow: '0 1px 0 black', display: 'none' },
   wordmark: { fontFamily: 'var(--display)', fontWeight: 800, fontSize: 18, letterSpacing: '-0.03em', lineHeight: 1 },
   wordmarkSub: { fontWeight: 400, color: 'var(--muted)', fontSize: 12, letterSpacing: '0.12em' },
   brandSub: { fontSize: 10, letterSpacing: '0.08em', color: 'var(--muted)', marginTop: 2 },
