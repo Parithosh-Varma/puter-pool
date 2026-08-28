@@ -12,6 +12,7 @@ import { RequestScheduler } from './scheduler/RequestScheduler';
 import { Database } from './database';
 import { createRouter } from './api/routes';
 import { createOpenAIRouter } from './api/openai';
+import { createAnthropicRouter } from './api/anthropic';
 import { apiKeyAuth, requestLogger } from './api/middleware';
 import { firebaseAuth } from './auth/FirebaseAuth';
 
@@ -139,6 +140,12 @@ async function main(): Promise<void> {
   // OpenAI-compatible API
   const openaiRouter = createOpenAIRouter(requestScheduler);
   app.use('/v1', openaiRouter);
+
+  // Anthropic-compatible API (POST /v1/messages, /anthropic/v1/messages)
+  const anthropicRouter = createAnthropicRouter(requestScheduler);
+  app.use('/v1', anthropicRouter);
+  app.use('/anthropic/v1', anthropicRouter);
+  app.use('/anthropic', anthropicRouter);
 
   // Authenticated API routes
   if (config.nodeEnv === 'production') {
