@@ -1,112 +1,153 @@
-# Puter Account Pool Manager — Free AI API with No Limits
+# Puter Pool — Free AI API with No Limits (OpenAI + Anthropic)
 
-**Get a free AI API** for **Claude Fable 5**, **Claude Sonnet 5**, **Gemini 2.5 Pro**, GPT-4o, DeepSeek, and 400+ models by pooling free Puter accounts. **Unlimited AI credits** — no credit card, no rate limits, no token costs.
+**Get a free AI API** for **Claude Opus 5**, **GPT-5.6 Sol**, **Gemini 3.7 Flash**, DeepSeek V4, Qwen, Llama, Mistral, Grok and **400+ models** by pooling free Puter accounts. **Unlimited credits** — no card, no rate limits, no token costs.
 
-📂 Source: https://github.com/Parithosh-Varma/puter-account-pool-manager-
+- **Live landing (Cloudflare):** https://puterpool.parithosh.workers.dev
+- **Tool (localhost-only):** `http://localhost:5173` — depot dashboard, `http://localhost:3000` API
+- **Repo:** https://github.com/Parithosh-Varma/puter-pool (moved from `puter-account-pool-manager-` — old URL redirects)
 
-Each Puter account comes with free daily AI credits. When one runs out, this tool seamlessly failovers to the next — so you never see `"No usage left for request"` again.
+Each Puter account gives daily AI credits. When one hits `No usage left for request`, the depot shunts to the next healthy bay — you never see a 429.
 
-> **SEO keywords:** free AI API · free AI credits · unlimited AI API · free Claude API · free GPT-4 API · free Gemini API · free DeepSeek API · AI API pool · Puter accounts pool · free LLM API · no cost AI API · free AI model router
+> **Keywords:** free AI API · free Claude API · free GPT-4 API · free Gemini API · unlimited AI API · Anthropic proxy · OpenAI proxy · Puter pool
 
 ```bash
-git clone https://github.com/Parithosh-Varma/puter-account-pool-manager-.git
-cp .env.example .env   # add Supabase credentials
+git clone https://github.com/Parithosh-Varma/puter-pool.git
+cd puter-pool
+cp .env.example .env   # SQLite at data/pool.db by default — no config needed
 npm install && npm run build && npm start
 
-# Separate terminal:
+# separate terminal:
 cd dashboard && npm install && npm run dev
+# → tool http://localhost:5173 (no auth, local-only)
+# → API  http://localhost:3000  (landing stays on Cloudflare)
 ```
 
 ## How it works
 
-1. **Create multiple Puter accounts** (free at puter.com)
-2. **Sign in with Puter** in the dashboard to link them
-3. Every AI request is routed through an account with available credit
-4. When an account hits its daily limit, the scheduler automatically retries on the next healthy account
-5. You get uninterrupted access — the pool handles the rotation transparently
+1. **Create multiple Puter accounts** (free at puter.com) — each gives daily credits
+2. **Paste tokens in depot** at `http://localhost:5173` (health + credit tracked)
+3. **Point any SDK** at one endpoint — OpenAI `POST /v1/chat/completions` or Anthropic `POST /v1/messages` / `POST /anthropic/v1/messages`
+4. **Scheduler shunts** — `round-robin` or `least-used`, retries up to `MAX_RETRIES=3`, parks `exhausted`/`error` bays via `HealthChecker`
+5. **Uninterrupted** — pool handles rotation transparently, tape logs every request
 
-**It's a free AI API proxy** — an OpenAI-compatible endpoint that distributes requests across your accounts, so no single account ever runs out. Use it as a **free alternative to OpenAI**, **free alternative to Claude API**, or **free alternative to Gemini API**. Every model Puter offers is available.
+It’s a **free AI API proxy** — OpenAI + Anthropic compatible, SSE streaming on both, same pooled rail.
 
 ## Features
 
-- **Free AI API** — fully OpenAI-compatible at `/v1/chat/completions` with SSE streaming
-- **400+ free models** — Claude Fable 5, Claude Sonnet 5, Gemini 2.5 Pro, GPT-4o, DeepSeek V3, Qwen, Llama, Mistral, and more
-- **Unlimited AI credits** — automatic failover across accounts means you never hit a cap
-- **No manual token extraction** — "Sign in with Puter" button handles authentication
-- **Accounts persist in Supabase** — survives server restarts
-- **React dashboard** with built-in chat UI, model selector with provider logos, real-time pool stats
-- **Free AI API key alternative** — no Stripe, no usage billing, no credit card required
-- **Docker support** — one-command deploy with docker-compose
+- **Free AI API** — OpenAI at `/v1/chat/completions` + Anthropic at `/v1/messages`, `/anthropic/v1/messages`, `/anthropic/messages` (all SSE)
+- **400+ free models** — live from `https://developer.puter.com/ai/models-feed.xml` (465 as of Aug 27) — Claude Opus 5, GPT-5.6 Sol, Gemini 3.7 Flash, DeepSeek V4, Muse Glimmer 30B, Mistral Medium 3.5, Qwen3.8 Flash, Grok 4.6, etc. — grouped by lab with LobeHub `icons-static-svg`
+- **Unlimited credits** — automatic failover across accounts never hits cap
+- **Local by design** — depot never deployed; tokens stay on `localhost`, landing is static on Cloudflare Workers (`puterpool`)
+- **Depot UI** — `P` logo (`#0C0F12` ink + `#FF3B1F` signal + `#FDB813` bolt), industrial rail, conveyor, health rail, queue meter, request tape, live traffic chart
+- **Custom depot icons** — RoundRobin / HealthRail / LiveTape SVGs + LobeHub provider logos
+- **Local SQLite** — `data/pool.db` via `node:sqlite` auto-created; `NEON_DATABASE_URL`/`DATABASE_URL` optional for Postgres
+- **React dashboard** — no Google OAuth gate (auto `LOCAL`); chat, account rack, strategy switch
+- **Docker** — `docker compose up -d` persists `./data` + `./logs`
 
 ## API
 
 ```
-POST /v1/chat/completions        OpenAI-compatible chat (SSE streaming)
-GET  /v1/models                  OpenAI-compatible model list
+# Proxies (same pool, same failover)
+POST /v1/chat/completions              OpenAI — JSON {model, messages, stream, max_tokens, temperature}
+POST /v1/messages                      Anthropic — JSON {model, max_tokens, messages, system, temperature, stream}
+POST /anthropic/v1/messages            alt Anthropic (SDK baseURL /anthropic)
+POST /anthropic/messages               alt
+GET  /v1/models                        OpenAI list (from https://api.puter.com/puterai/chat/models/details)
+GET  /healthz                          liveness
+GET  /readyz                           readiness (503 if 0 active)
 
-POST /api/ai/chat                Submit an AI request (auto-routed)
-GET  /api/models                 List all available Puter models
-GET  /api/accounts               List accounts with health + credit
-POST /api/accounts               Add an account
-DELETE /api/accounts/:id         Remove an account
-PATCH /api/accounts/:id          Update status/token
-GET  /api/stats                  Pool stats
-GET  /api/dashboard              Full data for the React UI
-GET  /api/history                Request history
-GET  /healthz                    Liveness check
+# App
+POST /api/ai/chat                      auto-routed {model, prompt, stream}
+GET  /api/models                       Puter models (RSS + details)
+GET  /api/accounts                     list with health + credit (token redacted)
+POST /api/accounts                     {name, token, dailyCreditLimit}
+DELETE /api/accounts/:id
+PATCH /api/accounts/:id                {status, token, name}
+GET  /api/stats                        pool + scheduler stats
+GET  /api/dashboard                    full UI data
+GET  /api/history?limit=100            request history (DB or memory)
 ```
 
-Example (works with any OpenAI SDK):
+**OpenAI curl:**
 ```bash
 curl http://localhost:3000/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{"model":"claude-fable-5","messages":[{"role":"user","content":"Hello"}]}'
+  -d '{"model":"claude-opus-5","messages":[{"role":"user","content":"Hello"}]}'
 ```
 
-Using the OpenAI Python SDK:
+**Anthropic curl:**
+```bash
+curl http://localhost:3000/v1/messages \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: ignored" -H "anthropic-version: 2023-06-01" \
+  -d '{"model":"claude-opus-5","max_tokens":1024,"messages":[{"role":"user","content":"Hello"}]}'
+```
+
+**OpenAI SDK:**
 ```python
 from openai import OpenAI
 client = OpenAI(base_url="http://localhost:3000/v1", api_key="ignored")
-response = client.chat.completions.create(
-    model="claude-fable-5",
-    messages=[{"role": "user", "content": "Hello"}]
-)
-print(response.choices[0].message.content)
+print(client.chat.completions.create(model="gpt-5.6-sol", messages=[{"role":"user","content":"Hello"}]).choices[0].message.content)
+```
+
+**Anthropic SDK:**
+```python
+import anthropic
+c = anthropic.Anthropic(base_url="http://localhost:3000", api_key="ignored")
+print(c.messages.create(model="claude-opus-5", max_tokens=1024, messages=[{"role":"user","content":"Hello"}]).content[0].text)
 ```
 
 ## Config
 
-Full options in `.env.example`.
-
-Key variables:
+Full options in `.env.example`. Key:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `SUPABASE_URL` | — | Supabase project URL (accounts persist here) |
-| `SUPABASE_KEY` | — | Supabase service-role key |
-| `SCHEDULER_STRATEGY` | round-robin | `round-robin` or `least-used` |
-| `MAX_RETRIES` | 3 | How many accounts to try before failing |
-| `HEALTH_CHECK_INTERVAL_MS` | 60000 | How often to re-verify accounts |
+| `PORT` | 3000 | API port |
+| `SQLITE_PATH` | `data/pool.db` | Local SQLite file (auto-created) |
+| `NEON_DATABASE_URL` / `DATABASE_URL` | — | If set, uses Postgres (Neon) instead of SQLite |
+| `SCHEDULER_STRATEGY` | round-robin | `round-robin` \| `least-used` |
+| `MAX_RETRIES` | 3 | Accounts to try before 5xx |
+| `HEALTH_CHECK_INTERVAL_MS` | 60000 | Re-verify interval |
+| `REQUEST_TIMEOUT_MS` | 30000 | Per-request timeout |
 
 ## Dashboard
 
-Open `http://localhost:5173` to:
-- Chat with any model for free (Claude Fable 5, Sonnet 5, Gemini 2.5 Pro, etc.)
-- Add accounts via "Sign in with Puter"
-- Monitor pool health, credit, latency, error rates
-- Enable/disable/delete accounts
-- Switch scheduling strategy
+`http://localhost:5173` — **TOOL · LOCALHOST ONLY** (no login):
+
+- Chat with any model (streaming)
+- Rack: add/enable/disable/delete cartridges
+- Health / credit / latency / errorRate / consecutiveFailures
+- Queue rail (128 slots) + live tape + traffic chart
+- Strategy switch
 
 ## Database
 
-Run `supabase-schema.sql` in Supabase SQL editor to create `puter_accounts` (account storage) and `ai_responses` (request history).
+- **Default:** `node:sqlite` at `SQLITE_PATH` (no setup, `data/` mounted in Docker)
+- **Optional Postgres:** set `NEON_DATABASE_URL=postgresql://...`; schema in `supabase-schema.sql` (`puter_accounts` + `ai_responses`) auto-created for SQLite, run SQL for Postgres
 
 ## Docker
 
 ```bash
-export SUPABASE_URL=... SUPABASE_KEY=...
+# SQLite (default, no env)
+docker compose up -d
+
+# Postgres
+export NEON_DATABASE_URL=postgresql://...
 docker compose up -d
 ```
+
+## Landing
+
+Separate Vite app at `/landing` — not in this repo’s git (see `.gitignore:landing/`), deployed to Cloudflare Workers:
+
+```bash
+cd landing && npm install && npm run build
+source ~/bin/load-env.zsh  # CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID
+npx wrangler deploy        # → https://puterpool.parithosh.workers.dev
+```
+
+Source: `landing/src/App.tsx` — hero with OpenAI + Anthropic curl, 400+ grouped by lab (live RSS), how it shunts, API docs, compare, local steps, FAQ; LobeHub CDN icons + custom depot SVGs; `wrangler.toml` `name = "puterpool"`.
 
 ## Tests
 
