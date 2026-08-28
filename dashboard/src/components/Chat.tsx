@@ -1,38 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  model?: string;
-  accountId?: string;
-  latency?: number;
-  error?: string;
-}
-
-interface FeedModel {
-  id: string;
-  name: string;
-  provider: string;
-  description: string;
-}
+interface Message { role: 'user' | 'assistant'; content: string; model?: string; accountId?: string; latency?: number; error?: string; }
+interface FeedModel { id: string; name: string; provider: string; description: string; }
 
 const PROVIDER_COLORS: Record<string, string> = {
-  anthropic: '#d97706',
-  google: '#4285f4',
-  qwen: '#10b981',
-};
-
-const PROVIDER_LOGOS: Record<string, string> = {
-  anthropic: 'A',
-  google: 'G',
-  qwen: 'Q',
+  anthropic: '#0C0F12',
+  google: '#1A43FF',
+  qwen: '#00A85A',
+  openai: '#FF3B1F',
+  meta: '#7A5CFF',
 };
 
 export default function Chat() {
   const { idToken } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Send a message to test the account pool.' },
+    { role: 'assistant', content: 'COMMS OPEN — Send a probe to test the rail. Each reply is stamped with the handling unit and latency.' },
   ]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -46,389 +29,182 @@ export default function Chat() {
   const authHeaders = (): Record<string, string> => idToken ? { Authorization: `Bearer ${idToken}` } : {};
 
   useEffect(() => {
-    fetch('/api/models', { headers: authHeaders() })
-      .then(r => r.json())
-      .then(d => setFeedModels(d.models || []))
-      .catch(() => {});
+    fetch('/api/models', { headers: authHeaders() }).then(r => r.json()).then(d => setFeedModels(d.models || [])).catch(() => {});
   }, [idToken]);
-
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
+    const h = (e: MouseEvent) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowDropdown(false); };
+    document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
   }, []);
 
-  const filtered = feedModels.filter(m =>
-    m.name.toLowerCase().includes(search.toLowerCase()) ||
-    m.provider.toLowerCase().includes(search.toLowerCase())
-  );
-
-  const selectModel = (name: string) => {
-    setModel(name);
-    setShowDropdown(false);
-    setSearch('');
-  };
+  const filtered = feedModels.filter(m => m.name.toLowerCase().includes(search.toLowerCase()) || m.provider.toLowerCase().includes(search.toLowerCase()));
+  const selectModel = (name: string) => { setModel(name); setShowDropdown(false); setSearch(''); };
 
   const send = async () => {
     if (!input.trim() || sending) return;
     const userMsg: Message = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMsg]);
-    setInput('');
-    setSending(true);
-
+    setMessages(prev => [...prev, userMsg]); setInput(''); setSending(true);
     try {
       const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ model, prompt: input }),
       });
       const data = await res.json();
-      const assistantMsg: Message = {
-        role: 'assistant',
-        content: data.response || 'no response',
-        model,
-        accountId: data.accountId,
-        latency: data.latency,
-        error: data.error,
-      };
-      setMessages(prev => [...prev, assistantMsg]);
+      setMessages(prev => [...prev, { role: 'assistant', content: data.response || 'no response', model, accountId: data.accountId, latency: data.latency, error: data.error }]);
     } catch (err) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Request failed',
-        error: err instanceof Error ? err.message : 'unknown error',
-      }]);
-    } finally {
-      setSending(false);
-    }
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Transmission failed', error: err instanceof Error ? err.message : 'unknown' }]);
+    } finally { setSending(false); }
   };
+  const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      send();
-    }
-  };
+  const activeModel = feedModels.find(m => m.name === model || m.id === model);
 
   return (
-    <div style={styles.container}>
-      <div style={styles.toolbar}>
-        <div style={styles.modelSelector} ref={dropdownRef}>
-          <div style={styles.modelDisplay} onClick={() => setShowDropdown(!showDropdown)}>
-            {(() => {
-              const active = feedModels.find(m => m.name === model || m.id === model);
-              const p = active?.provider || '';
-              return (
-                <div style={{ ...styles.providerLogo, background: PROVIDER_COLORS[p] || '#6366f1' }}>
-                  {PROVIDER_LOGOS[p] || p[0]?.toUpperCase() || '?'}
+    <div style={s.shell} className="depot-card">
+      <div style={s.toolbar}>
+        <div style={s.toolbarLeft}>
+          <span className="mono" style={s.kicker}>PATCH BAY</span>
+          <div style={s.modelSelector} ref={dropdownRef}>
+            <button style={s.modelBtn} onClick={() => setShowDropdown(!showDropdown)}>
+              <span style={{ ...s.logo, background: PROVIDER_COLORS[activeModel?.provider || ''] || '#0C0F12' }}>{(activeModel?.provider || model)[0]?.toUpperCase() || '?'}</span>
+              <span style={s.modelName} className="mono">{model}</span>
+              <span style={s.caret}>{showDropdown ? '▴' : '▾'}</span>
+            </button>
+            {showDropdown && (
+              <div style={s.dropdown}>
+                <div style={s.searchWrap}>
+                  <span style={s.searchIcon}>⌕</span>
+                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search 400+ models..." style={s.search} autoFocus />
                 </div>
-              );
-            })()}
-            <span style={styles.modelLabel}>{model}</span>
-            <span style={styles.arrow}>{showDropdown ? '\u25B2' : '\u25BC'}</span>
-          </div>
-          {showDropdown && (
-            <div style={styles.dropdown}>
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search models..."
-                style={styles.searchInput}
-                autoFocus
-              />
-              <div style={styles.dropdownList}>
-                {search && !feedModels.some(m => m.name.toLowerCase() === search.toLowerCase()) && (
-                  <div
-                    style={styles.dropdownItem}
-                    onClick={() => selectModel(search)}
-                  >
-                    <span style={styles.customBadge}>custom</span>
-                    {search}
-                  </div>
-                )}
-                {filtered.map(m => (
-                  <div
-                    key={m.id}
-                    style={{
-                      ...styles.dropdownItem,
-                      background: model === m.id ? 'hsl(var(--secondary))' : 'transparent',
-                    }}
-                    onClick={() => selectModel(m.id)}
-                  >
-                    <div style={styles.itemLeft}>
-                      <div style={{ ...styles.providerLogoSmall, background: PROVIDER_COLORS[m.provider] || '#6366f1' }}>
-                        {PROVIDER_LOGOS[m.provider] || m.provider[0]?.toUpperCase() || '?'}
-                      </div>
-                      <div>
-                        <div style={styles.itemTop}>
-                          <span style={styles.itemName}>{m.name}</span>
-                          <span style={styles.itemProvider}>{m.provider}</span>
-                        </div>
-                        <div style={styles.itemDesc}>{m.description}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {filtered.length === 0 && !search && (
-                  <div style={styles.loadingText}>Loading models...</div>
-                )}
+                <div style={s.list}>
+                  {search && !feedModels.some(m => m.name.toLowerCase() === search.toLowerCase()) && (
+                    <button style={s.item} onClick={() => selectModel(search)}>
+                      <span style={s.customTag} className="mono">CUSTOM</span> {search}
+                    </button>
+                  )}
+                  {filtered.map(m => (
+                    <button key={m.id} style={{ ...s.item, ...(model === m.id ? s.itemActive : {}) }} onClick={() => selectModel(m.id)}>
+                      <span style={{ ...s.logoSm, background: PROVIDER_COLORS[m.provider] || '#0C0F12' }}>{m.provider[0]?.toUpperCase()}</span>
+                      <span style={{ flex: 1, textAlign: 'left' }}>
+                        <span style={s.itemName}>{m.name}</span>
+                        <span style={s.itemProvider} className="mono">{m.provider}</span>
+                      </span>
+                      <span style={s.itemDesc}>{m.description?.slice(0, 48)}</span>
+                    </button>
+                  ))}
+                  {filtered.length === 0 && !search && <div style={s.loading} className="mono">Loading manifest…</div>}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div>
+        <div style={s.toolbarRight} className="mono">
+          <span style={s.badge}>VIA POOL</span>
+          <span style={s.badgeMuted}>{messages.length} MESSAGES</span>
         </div>
       </div>
 
-      <div style={styles.messages}>
-        {messages.map((msg, i) => (
-          <div key={i} style={{
-            ...styles.message,
-            flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
-          }}>
-            <div style={{
-              ...styles.bubble,
-              background: msg.role === 'user' ? '#6366f1' : 'var(--secondary)',
-              border: msg.role === 'user' ? 'none' : '1px solid var(--border)',
-              color: msg.role === 'user' ? '#fff' : 'var(--foreground)',
-            }}>
-              <div style={styles.bubbleText}>{msg.content}</div>
-              {(msg.accountId || msg.latency) && (
-                <div style={styles.meta}>
-                  {msg.accountId && <span>via {msg.accountId}</span>}
-                  {msg.latency && <span>{msg.latency}ms</span>}
+      <div style={s.tape}>
+        <div style={s.tapeInner}>
+          {messages.map((msg, i) => (
+            <div key={i} style={msg.role === 'user' ? s.rowUser : s.rowAssist}>
+              <div style={msg.role === 'user' ? s.bubbleUser : s.bubbleAssist}>
+                <div style={s.bubbleHead} className="mono">
+                  <span style={s.bubbleRole}>{msg.role === 'user' ? 'YOU — OUTBOUND' : 'DEPOT — INBOUND'}</span>
+                  <span style={s.bubbleTime}>{new Date().toLocaleTimeString('en-US', { hour12: false })}</span>
                 </div>
-              )}
-              {msg.error && <div style={styles.error}>{msg.error}</div>}
+                <div style={s.bubbleText}>{msg.content}</div>
+                {(msg.accountId || msg.latency || msg.model) && (
+                  <div style={s.meta} className="mono">
+                    {msg.model && <span>MODEL {msg.model}</span>}
+                    {msg.accountId && <span>UNIT {msg.accountId}</span>}
+                    {msg.latency && <span>{msg.latency}ms</span>}
+                  </div>
+                )}
+                {msg.error && <div style={s.error} className="mono">ERR — {msg.error}</div>}
+              </div>
             </div>
-          </div>
-        ))}
-        {sending && (
-          <div style={styles.typing}>
-            <span style={styles.dot} /><span style={styles.dot} /><span style={styles.dot} />
-          </div>
-        )}
-        <div ref={bottomRef} />
+          ))}
+          {sending && (
+            <div style={s.rowAssist}>
+              <div style={s.bubbleAssist}>
+                <div style={s.typing} className="mono">
+                  <span style={s.typingDot} /><span style={s.typingDot} /><span style={s.typingDot} />
+                  <span>TRANSMITTING…</span>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      <div style={styles.inputBar}>
-        <textarea
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
-          rows={1}
-          style={styles.textarea}
-        />
-        <button onClick={send} disabled={sending || !input.trim()} style={styles.sendBtn}>
-          Send
-        </button>
+      <div style={s.composer}>
+        <div style={s.composerInner}>
+          <textarea
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message — Shift+Enter for line break"
+            rows={1}
+            style={s.textarea}
+          />
+          <button onClick={send} disabled={sending || !input.trim()} style={{ ...s.sendBtn, opacity: !input.trim() || sending ? 0.5 : 1 }}>
+            <span className="mono" style={{ fontWeight: 800, letterSpacing: '0.08em' }}>SEND →</span>
+          </button>
+        </div>
+        <div style={s.composerFoot} className="mono">
+          <span>Route retries automatically on failure.</span>
+          <span style={{ opacity: 0.5 }}>ENTER to send · Model: {model}</span>
+        </div>
       </div>
     </div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    height: 'calc(100vh - 200px)',
-    background: 'var(--card)',
-    borderRadius: 16,
-    border: '1px solid var(--border)',
-    overflow: 'hidden',
-    backdropFilter: 'blur(8px)',
-  },
-  toolbar: {
-    padding: '14px 20px',
-    borderBottom: '1px solid var(--border)',
-    background: 'rgba(255, 255, 255, 0.02)',
-  },
-  modelSelector: {
-    position: 'relative',
-    maxWidth: 400,
-  },
-  modelDisplay: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '8px 14px',
-    borderRadius: 10,
-    border: '1px solid var(--border)',
-    background: 'var(--input)',
-    color: 'var(--foreground)',
-    fontSize: 13,
-    fontWeight: 500,
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-  },
-  modelLabel: {
-    fontWeight: 500,
-  },
-  arrow: {
-    fontSize: 9,
-    color: 'var(--muted-foreground)',
-    marginLeft: 8,
-  },
-  dropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    marginTop: 6,
-    background: 'var(--input)',
-    border: '1px solid var(--border)',
-    borderRadius: 12,
-    zIndex: 100,
-    maxHeight: 360,
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 12px 30px rgba(0,0,0,0.15)',
-  },
-  searchInput: {
-    padding: '10px 14px',
-    border: 'none',
-    borderBottom: '1px solid var(--border)',
-    background: 'transparent',
-    color: 'var(--foreground)',
-    fontSize: 13,
-    outline: 'none',
-  },
-  dropdownList: {
-    overflowY: 'auto',
-    maxHeight: 300,
-  },
-  dropdownItem: {
-    padding: '10px 14px',
-    cursor: 'pointer',
-    borderBottom: '1px solid var(--border)',
-    transition: 'background 0.2s',
-  },
-  itemTop: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  itemName: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: 'var(--foreground)',
-  },
-  itemProvider: {
-    fontSize: 10,
-    fontWeight: 500,
-    color: 'var(--muted-foreground)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  },
-  itemDesc: {
-    fontSize: 11,
-    color: 'var(--muted-foreground)',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-  },
-  customBadge: {
-    fontSize: 10,
-    color: '#6366f1',
-    marginRight: 6,
-    fontWeight: 600,
-  },
-  loadingText: {
-    padding: 16,
-    textAlign: 'center',
-    color: 'var(--muted-foreground)',
-    fontSize: 13,
-  },
-  messages: {
-    flex: 1,
-    overflowY: 'auto',
-    padding: 20,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 16,
-  },
-  message: {
-    display: 'flex',
-    gap: 10,
-  },
-  bubble: {
-    maxWidth: '75%',
-    padding: '12px 16px',
-    borderRadius: 16,
-    fontSize: 14,
-    lineHeight: 1.6,
-  },
-  bubbleText: {
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-  },
-  meta: {
-    display: 'flex',
-    gap: 8,
-    marginTop: 8,
-    fontSize: 11,
-    color: 'var(--muted-foreground)',
-    fontFamily: "'JetBrains Mono', monospace",
-  },
-  error: {
-    marginTop: 8,
-    fontSize: 11,
-    color: '#f43f5e',
-  },
-  typing: {
-    display: 'flex',
-    gap: 4,
-    padding: '10px 16px',
-    alignSelf: 'flex-start',
-    background: 'var(--secondary)',
-    borderRadius: 16,
-    border: '1px solid var(--border)',
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: '50%',
-    background: 'var(--muted-foreground)',
-    animation: 'pulse 1.4s infinite',
-  },
-  inputBar: {
-    display: 'flex',
-    gap: 10,
-    padding: '16px 20px',
-    borderTop: '1px solid var(--border)',
-    background: 'rgba(255, 255, 255, 0.01)',
-  },
-  textarea: {
-    flex: 1,
-    padding: '10px 14px',
-    borderRadius: 10,
-    border: '1px solid var(--border)',
-    background: 'var(--input)',
-    color: 'var(--foreground)',
-    fontSize: 14,
-    resize: 'none',
-    outline: 'none',
-    fontFamily: 'inherit',
-    transition: 'border-color 0.2s',
-  },
-  sendBtn: {
-    padding: '10px 24px',
-    borderRadius: 10,
-    border: 'none',
-    background: '#6366f1',
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.3)',
-  },
+const s: Record<string, React.CSSProperties> = {
+  shell: { display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 520, padding: 0 },
+  toolbar: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '12px 14px', borderBottom: '1.5px solid var(--border)', background: 'var(--paper-2)', flexWrap: 'wrap' },
+  toolbarLeft: { display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
+  kicker: { fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--muted)', background: 'var(--card)', border: '1px solid var(--border)', padding: '4px 8px', borderRadius: 999 },
+  modelSelector: { position: 'relative' },
+  modelBtn: { display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--card)', cursor: 'pointer', minWidth: 220 },
+  logo: { width: 22, height: 22, borderRadius: 6, color: 'white', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 },
+  modelName: { fontSize: 12, fontWeight: 700, flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  caret: { fontSize: 10, color: 'var(--muted)' },
+  dropdown: { position: 'absolute', top: 'calc(100% + 8px)', left: 0, right: 0, minWidth: 320, background: 'var(--card)', border: '1.5px solid var(--border)', borderRadius: 12, boxShadow: '0 16px 40px rgba(0,0,0,0.16)', zIndex: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: 380 },
+  searchWrap: { display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderBottom: '1px solid var(--border)' },
+  searchIcon: { color: 'var(--muted)', fontSize: 13 },
+  search: { flex: 1, border: 'none', outline: 'none', background: 'transparent', fontSize: 13, fontFamily: 'var(--sans)', color: 'var(--fg)' },
+  list: { overflowY: 'auto', maxHeight: 300 },
+  item: { width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: 'none', borderBottom: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', textAlign: 'left' },
+  itemActive: { background: 'var(--paper-2)' },
+  logoSm: { width: 22, height: 22, borderRadius: 6, color: 'white', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, flexShrink: 0 },
+  itemName: { fontSize: 12, fontWeight: 700, display: 'block' },
+  itemProvider: { fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--muted)', display: 'block' },
+  itemDesc: { fontSize: 10, color: 'var(--muted)', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  customTag: { fontSize: 9, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--electric)', background: 'var(--electric-soft)', border: '1px solid #C7D2FF', padding: '2px 6px', borderRadius: 999 },
+  loading: { padding: 16, textAlign: 'center', fontSize: 11, letterSpacing: '0.08em', color: 'var(--muted)', fontWeight: 700 },
+  toolbarRight: { display: 'flex', gap: 8, alignItems: 'center', fontSize: 10, fontWeight: 800, letterSpacing: '0.08em' },
+  badge: { padding: '4px 8px', borderRadius: 999, background: 'var(--ink)', color: 'white' },
+  badgeMuted: { color: 'var(--muted)' },
+  tape: { flex: 1, overflowY: 'auto', background: 'var(--paper)', backgroundImage: 'repeating-linear-gradient(0deg, transparent 0 28px, rgba(0,0,0,0.03) 28px 29px)' },
+  tapeInner: { padding: '16px 14px', display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 860, margin: '0 auto', width: '100%' },
+  rowUser: { display: 'flex', justifyContent: 'flex-end' },
+  rowAssist: { display: 'flex', justifyContent: 'flex-start' },
+  bubbleUser: { maxWidth: '78%', padding: '12px 14px', borderRadius: 14, background: 'var(--ink)', color: 'var(--paper)', border: '1.5px solid var(--ink)', boxShadow: '2px 2px 0 var(--border)' },
+  bubbleAssist: { maxWidth: '78%', padding: '12px 14px', borderRadius: 14, background: 'var(--card)', border: '1.5px solid var(--border)', boxShadow: '2px 2px 0 var(--border)' },
+  bubbleHead: { display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 9, fontWeight: 800, letterSpacing: '0.10em', opacity: 0.6, marginBottom: 6, borderBottom: '1px dashed var(--border)', paddingBottom: 6 },
+  bubbleRole: { letterSpacing: '0.10em' },
+  bubbleTime: { fontVariantNumeric: 'tabular-nums' },
+  bubbleText: { fontSize: 13.5, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' },
+  meta: { display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8, fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', opacity: 0.6, borderTop: '1px solid var(--border)', paddingTop: 8 },
+  error: { marginTop: 8, fontSize: 10, fontWeight: 700, color: 'var(--danger)', background: 'rgba(255,59,31,0.08)', border: '1px solid rgba(255,59,31,0.18)', padding: '6px 8px', borderRadius: 8 },
+  typing: { display: 'flex', gap: 6, alignItems: 'center', fontSize: 10, fontWeight: 800, letterSpacing: '0.10em', color: 'var(--muted)' },
+  typingDot: { width: 6, height: 6, borderRadius: 999, background: 'var(--muted)', display: 'inline-block', animation: 'ping 1.2s infinite' },
+  composer: { borderTop: '1.5px solid var(--border)', background: 'var(--card)', padding: '12px 14px' },
+  composerInner: { display: 'flex', gap: 10, alignItems: 'flex-end', maxWidth: 860, margin: '0 auto', width: '100%' },
+  textarea: { flex: 1, padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--paper-2)', fontSize: 13, fontFamily: 'var(--sans)', resize: 'none', outline: 'none', minHeight: 42, maxHeight: 120 },
+  sendBtn: { padding: '11px 16px', borderRadius: 10, border: '1.5px solid var(--ink)', background: 'var(--signal)', color: 'white', fontSize: 12, cursor: 'pointer', boxShadow: '2px 2px 0 var(--ink)', flexShrink: 0 },
+  composerFoot: { display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 10, fontWeight: 600, color: 'var(--muted)', maxWidth: 860, margin: '8px auto 0', width: '100%', flexWrap: 'wrap' },
 };

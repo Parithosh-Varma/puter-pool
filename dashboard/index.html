@@ -3,162 +3,179 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Puter Account Pool Manager</title>
+    <title>Puter Depot — Account Pool Router</title>
     <link rel="icon" type="image/png" href="/logo.png" />
-    <meta name="description" content="Free AI API with no limits — pool your Puter accounts and route requests across 400+ models automatically." />
+    <meta name="description" content="Puter Depot — pool your Puter accounts and route 400+ models through one resilient endpoint. Industrial-grade load balancing for free AI." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5555619941305353" crossorigin="anonymous"></script>
     <script async src="https://fundingchoicesmessages.google.com/i/pub-5555619941305353?ers=1"></script>
     <script src="https://js.puter.com/v2/"></script>
     <style>
       :root {
-        --background: 222 47% 5%;
-        --foreground: 210 40% 98%;
-        --card: 217 33% 17%;
-        --card-foreground: 210 40% 98%;
-        --primary: 239 84% 67%;
-        --primary-foreground: 0 0% 100%;
-        --secondary: 215 25% 15%;
-        --secondary-foreground: 210 40% 98%;
-        --muted: 215 25% 15%;
-        --muted-foreground: 215 20% 65%;
-        --accent: 215 25% 15%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 217 33% 17%;
-        --input: 217 33% 17%;
-        --ring: 239 84% 67%;
-        --radius: 0.5rem;
-        --chart-grid: hsl(0 0% 100% / 0.04);
-        --chart-tooltip-bg: hsl(222 47% 5%);
-        --scroll-thumb: rgba(255, 255, 255, 0.08);
-        --scroll-thumb-hover: rgba(255, 255, 255, 0.15);
-        --glass-bg: rgba(15, 23, 42, 0.75);
-        --glass-border: rgba(255, 255, 255, 0.08);
-        --glass-hover-border: rgba(99, 102, 241, 0.3);
-        --table-hover: rgba(255, 255, 255, 0.03);
-        --input-bg: rgba(255, 255, 255, 0.04);
+        --ink: #0C0F12;
+        --ink-2: #14181C;
+        --ink-3: #1C2127;
+        --paper: #FDFBF3;
+        --paper-2: #F2EDE0;
+        --stone: #E8E1CC;
+        --stone-2: #D8D0B8;
+        --line: #262C33;
+        --line-soft: #E9E2CE;
+        --signal: #FF3B1F;
+        --signal-hover: #E6341A;
+        --electric: #1A43FF;
+        --electric-soft: #EDF0FF;
+        --success: #00A85A;
+        --warn: #FFB800;
+        --danger: #FF3B1F;
+        --muted: #7A838F;
+        --muted-2: #9AA3AD;
+        --bg: var(--paper);
+        --fg: var(--ink);
+        --card: #FFFFFF;
+        --card-ink: var(--ink);
+        --border: var(--line-soft);
+        --border-strong: var(--ink);
+        --radius: 12px;
+        --radius-sm: 8px;
+        --radius-xs: 6px;
+        --mono: 'JetBrains Mono', ui-monospace, monospace;
+        --sans: 'DM Sans', system-ui, sans-serif;
+        --display: 'Space Grotesk', sans-serif;
+        --serif: 'Instrument Serif', serif;
+        --shadow-depot: 0 1px 0 var(--ink), 0 6px 24px rgba(12,15,18,0.08);
+        --shadow-card: 0 1px 0 rgba(12,15,18,0.06), 0 8px 28px rgba(12,15,18,0.06);
+        --chart-grid: rgba(12,15,18,0.06);
+        --chart-tooltip-bg: #0C0F12;
+        --chart-tooltip-fg: #FDFBF3;
       }
-      :root[data-theme="light"] {
-        --background: 210 40% 98%;
-        --foreground: 222 47% 11%;
-        --card: 0 0% 100%;
-        --card-foreground: 222 47% 11%;
-        --primary: 239 84% 67%;
-        --primary-foreground: 0 0% 100%;
-        --secondary: 210 40% 96%;
-        --secondary-foreground: 222 47% 11%;
-        --muted: 210 40% 96%;
-        --muted-foreground: 215 16% 47%;
-        --accent: 210 40% 96%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 214 32% 91%;
-        --input: 0 0% 100%;
-        --ring: 239 84% 67%;
-        --radius: 0.5rem;
-        --chart-grid: rgba(0, 0, 0, 0.05);
-        --chart-tooltip-bg: #ffffff;
-        --scroll-thumb: rgba(0, 0, 0, 0.1);
-        --scroll-thumb-hover: rgba(0, 0, 0, 0.2);
-        --glass-bg: rgba(255, 255, 255, 0.8);
-        --glass-border: rgba(0, 0, 0, 0.08);
-        --glass-hover-border: rgba(99, 102, 241, 0.4);
-        --table-hover: rgba(0, 0, 0, 0.02);
-        --input-bg: rgba(0, 0, 0, 0.03);
+      :root[data-theme="dark"] {
+        --bg: #0C0F12;
+        --fg: #FDFBF3;
+        --paper: #0C0F12;
+        --paper-2: #14181C;
+        --card: #14181C;
+        --card-ink: #FDFBF3;
+        --border: #262C33;
+        --border-strong: #2E353E;
+        --muted: #8A9199;
+        --line-soft: #262C33;
+        --stone: #1E242B;
+        --chart-grid: rgba(253,251,243,0.06);
+        --shadow-depot: 0 1px 0 #000, 0 10px 36px rgba(0,0,0,0.45);
+        --shadow-card: 0 1px 0 rgba(255,255,255,0.04), 0 8px 28px rgba(0,0,0,0.35);
       }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
       body {
         margin: 0;
-        background-color: hsl(var(--background));
-        color: hsl(var(--foreground));
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: var(--sans);
         overflow-x: hidden;
-        transition: background-color 0.3s, color 0.3s;
+        -webkit-font-smoothing: antialiased;
+        transition: background 0.25s, color 0.25s;
       }
-      .glass-panel {
-        background: var(--glass-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid var(--glass-border);
-        border-radius: 14px;
+      ::selection { background: var(--signal); color: white; }
+      /* Paper grid */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.45;
+        background-image:
+          linear-gradient(var(--border) 1px, transparent 1px),
+          linear-gradient(90deg, var(--border) 1px, transparent 1px);
+        background-size: 32px 32px;
+        mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 45%, transparent 85%);
+        z-index: -1;
       }
-      .glass-panel-hover:hover {
-        border-color: var(--glass-hover-border);
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-        transition: border-color 0.2s, box-shadow 0.2s;
+      :root[data-theme="dark"] body::before { opacity: 0.08; }
+      /* Utilities */
+      .mono { font-family: var(--mono); }
+      .display { font-family: var(--display); }
+      .depot-card {
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-card);
       }
-      .glass-input {
-        background: var(--input-bg) !important;
-        border: 1px solid var(--glass-border) !important;
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
+      .depot-card-ink {
+        background: var(--ink);
+        color: var(--paper);
+        border: 1.5px solid var(--ink);
       }
-      .glass-input:focus {
-        border-color: var(--ring) !important;
-        box-shadow: 0 0 0 3px hsl(var(--ring) / 0.2);
-        outline: none;
+      :root[data-theme="dark"] .depot-card-ink { background: #0C0F12; border-color: #262C33; }
+      .ink-label {
+        font-family: var(--mono);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
       }
-      .table-row-hover:hover {
-        background: var(--table-hover);
+      .hairline { height: 1px; background: var(--border); }
+      .btn-signal {
+        background: var(--signal);
+        color: white;
+        border: 1.5px solid var(--ink);
+        box-shadow: 3px 3px 0 var(--ink);
+        font-family: var(--display);
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        transition: all 0.12s;
       }
-      .text-gradient {
-        background: linear-gradient(to right, #818cf8, #c084fc);
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
+      .btn-signal:hover { background: var(--signal-hover); transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
+      .btn-signal:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--ink); }
+      .btn-ghost {
+        background: var(--card);
+        border: 1.5px solid var(--border);
+        color: var(--fg);
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
       }
-      .ad-slot {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 90px;
-        margin: 28px auto;
-        overflow: hidden;
-      }
-      .ad-slot-square {
-        min-height: 250px;
-      }
-      @media (max-width: 640px) {
-        .github-btn-text {
-          display: none;
-        }
-      }
-      /* Custom modern scrollbars */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: var(--scroll-thumb);
-        border-radius: 999px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: var(--scroll-thumb-hover);
-      }
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-      .spin {
-        animation: spin 1s linear infinite;
-      }
-      @keyframes pulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.4; transform: scale(0.9); }
-      }
+      .ad-slot { display:flex; justify-content:center; align-items:center; min-height:90px; margin:18px auto; overflow:hidden; border:1.5px dashed var(--border); background: var(--card); border-radius: var(--radius); }
+      .ad-slot-square { min-height:250px; }
+      @media (max-width: 640px) { .github-btn-text { display:none; } }
+      /* Scrollbars */
+      ::-webkit-scrollbar { width: 8px; height: 8px; }
+      ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; border: 2px solid var(--bg); }
+      ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+      /* Animations */
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .spin { animation: spin 0.9s linear infinite; }
       @keyframes ping {
-        0% { transform: scale(1); opacity: 0.8; }
-        75%, 100% { transform: scale(2.4); opacity: 0; }
+        0% { transform: scale(1); opacity: 0.9; }
+        100% { transform: scale(2.6); opacity: 0; }
       }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
+      @keyframes ticker {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
       }
+      @keyframes conveyor {
+        0% { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: 24; }
+      }
+      @keyframes rise {
+        from { opacity:0; transform: translateY(10px); }
+        to { opacity:1; transform: translateY(0); }
+      }
+      @keyframes flap {
+        0% { transform: rotateX(0); }
+        50% { transform: rotateX(-22deg); background: var(--stone); }
+        100% { transform: rotateX(0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .spin, .hairline, [style*="animation"] { animation: none !important; }
+      }
+      /* Focus */
+      :focus-visible { outline: 2px solid var(--electric); outline-offset: 2px; }
     </style>
   </head>
   <body>

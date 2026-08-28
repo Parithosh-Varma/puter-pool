@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  PauseCircleIcon,
-  RefreshIcon,
-  TrashIcon,
-  CheckIcon,
-  XIcon,
-} from './icons';
+import { PauseCircleIcon, RefreshIcon, TrashIcon, CheckIcon, XIcon } from './icons';
 
 interface Account {
   id: string;
@@ -28,282 +22,127 @@ interface Account {
     resetAt: string;
   };
 }
-
-interface Props {
-  account: Account;
-  onToggle: () => void;
-  onRefresh: () => void;
-  onDelete: () => void;
-}
+interface Props { account: Account; onToggle: () => void; onRefresh: () => void; onDelete: () => void; }
 
 export function PlayIcon({ size = 16, className }: { size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <polygon points="6 3 20 12 6 21 6 3" />
-    </svg>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className}><polygon points="6 3 20 12 6 21 6 3" /></svg>
   );
 }
 
-const STATUS_BADGES: Record<string, { color: string; bg: string }> = {
-  active: { color: '#34d399', bg: 'rgba(52, 211, 153, 0.1)' },
-  disabled: { color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.1)' },
-  exhausted: { color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.1)' },
-  error: { color: '#fb7185', bg: 'rgba(251, 113, 133, 0.1)' },
-  pending_verification: { color: '#a5b4fc', bg: 'rgba(165, 180, 252, 0.1)' },
+const STATUS: Record<string, { label: string; color: string; bg: string; stripe: string }> = {
+  active: { label: 'ACTIVE', color: 'var(--success)', bg: 'rgba(0,168,90,0.10)', stripe: 'var(--success)' },
+  disabled: { label: 'PARKED', color: '#7A838F', bg: 'rgba(122,131,143,0.12)', stripe: '#7A838F' },
+  exhausted: { label: 'EMPTY', color: 'var(--warn)', bg: 'rgba(255,184,0,0.15)', stripe: 'var(--warn)' },
+  error: { label: 'ERROR', color: 'var(--danger)', bg: 'rgba(255,59,31,0.12)', stripe: 'var(--danger)' },
+  pending_verification: { label: 'VERIFYING', color: 'var(--electric)', bg: 'rgba(26,67,255,0.10)', stripe: 'var(--electric)' },
 };
 
 export default function AccountCard({ account, onToggle, onRefresh, onDelete }: Props) {
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [msg, setMsg] = useState('');
-
-  const badge = STATUS_BADGES[account.status] || { color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.1)' };
-  const creditPct = account.credit.limit > 0
-    ? Math.min((account.credit.used / account.credit.limit) * 100, 100)
-    : 0;
+  const meta = STATUS[account.status] || STATUS.disabled;
+  const pct = account.credit.limit > 0 ? Math.min((account.credit.used / account.credit.limit) * 100, 100) : 0;
+  const remainingPct = 100 - pct;
 
   const reauthWithPuter = async () => {
-    setSaving(true);
-    setMsg('');
+    setSaving(true); setMsg('');
     try {
       const puter = (window as any).puter;
       if (!puter?.auth) throw new Error('Puter.js failed to load');
       await puter.auth.signIn();
-      const token = puter.auth.getToken
-        ? puter.auth.getToken()
-        : localStorage.getItem('puter.auth.token.v2');
+      const token = puter.auth.getToken ? puter.auth.getToken() : localStorage.getItem('puter.auth.token.v2');
       if (!token) throw new Error('No Puter token received');
       const res = await fetch(`/api/accounts/${account.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, status: 'pending_verification' }),
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, status: 'pending_verification' }),
       });
-      if (res.ok) {
-        setMsg('Token updated! Re-verifying...');
-        onRefresh();
-      } else {
-        const data = await res.json();
-        setMsg(data.error || 'Failed to update');
-      }
+      if (res.ok) { setMsg('Token refreshed — verifying…'); onRefresh(); }
+      else { const d = await res.json(); setMsg(d.error || 'Failed to update'); }
     } catch (err) {
-      setMsg(err instanceof Error ? err.message : 'Re-auth failed — popup blocked?');
-    } finally {
-      setSaving(false);
-    }
+      setMsg(err instanceof Error ? err.message : 'Re-auth failed');
+    } finally { setSaving(false); }
   };
 
   return (
-    <tr className="table-row-hover" style={styles.row}>
-      <td style={styles.cell}>
-        <div style={styles.accountCell}>
-          <span style={{ ...styles.statusDot, background: badge.color }} />
-          <div>
-            <div style={styles.name}>{account.name}</div>
-            <div style={styles.id}>{account.id}</div>
+    <tr style={s.row}>
+      <td style={s.cell}>
+        <div style={s.idCell}>
+          <span style={{ ...s.rail, background: meta.stripe }} />
+          <span style={{ ...s.dot, background: meta.color, boxShadow: `0 0 0 6px ${meta.bg}` }} />
+          <div style={{ minWidth: 0 }}>
+            <div style={s.nameRow}>
+              <span style={s.name}>{account.name}</span>
+              <span style={{ ...s.statusBadge, color: meta.color, background: meta.bg, borderColor: meta.color }}>{meta.label}</span>
+            </div>
+            <div style={s.id} className="mono">{account.id}</div>
           </div>
         </div>
       </td>
-      <td style={styles.cell}>
-        <span style={{ ...styles.badge, color: badge.color, background: badge.bg }}>
-          {account.status.replace('_', ' ')}
-        </span>
+      <td style={s.cell}>
+        <span style={{ ...s.statusPill, background: meta.bg, color: meta.color, borderColor: meta.color }}>{meta.label}</span>
       </td>
-      <td style={styles.cell}>
-        <div style={styles.quotaCell}>
-          <div style={styles.quotaTop}>
-            <span style={styles.quotaValue}>
-              {account.credit.remaining.toLocaleString()} <span style={styles.quotaLimit}>/ {account.credit.limit.toLocaleString()}</span>
-            </span>
-            <span style={styles.quotaPct}>{creditPct.toFixed(0)}%</span>
+      <td style={s.cell}>
+        <div style={s.quotaCell}>
+          <div style={s.quotaTop} className="mono">
+            <span style={s.quotaVal}>{account.credit.remaining.toLocaleString()} <span style={s.quotaSlash}>/ {account.credit.limit.toLocaleString()}</span></span>
+            <span style={{ ...s.quotaPct, color: pct > 80 ? 'var(--danger)' : pct > 50 ? 'var(--warn)' : 'var(--success)' }}>{remainingPct.toFixed(0)}% LEFT</span>
           </div>
-          <div style={styles.barBg}>
-            <div style={{
-              ...styles.barFill,
-              width: `${creditPct}%`,
-              background: creditPct > 80 ? '#fb7185' : creditPct > 50 ? '#fbbf24' : '#34d399',
-            }} />
+          <div style={s.segTrack} aria-hidden>
+            {Array.from({ length: 10 }).map((_, i) => (
+              <span key={i} style={{ ...s.seg, background: (i / 10) * 100 < pct ? (pct > 80 ? 'var(--danger)' : pct > 50 ? 'var(--warn)' : 'var(--ink)') : 'var(--border)', opacity: (i / 10) * 100 < pct ? 1 : 0.35 }} />
+            ))}
           </div>
         </div>
       </td>
-      <td style={styles.cell}>
-        <span style={styles.mono}>{account.health?.latency ? `${account.health.latency.toFixed(0)}ms` : '-'}</span>
-      </td>
-      <td style={styles.cell}>
-        <span style={styles.mono}>{account.health?.totalRequests || 0}</span>
-      </td>
-      <td style={styles.cell}>
-        <div style={styles.actions}>
-          <button
-            onClick={onToggle}
-            title={account.status === 'disabled' ? 'Enable' : 'Disable'}
-            style={{ ...styles.iconBtn, ...(account.status === 'disabled' ? styles.iconBtnGreen : styles.iconBtnRed) }}
-          >
-            {account.status === 'disabled' ? <PlayIcon size={14} /> : <PauseCircleIcon size={14} />}
+      <td style={s.cell}><span className="mono" style={s.monoVal}>{account.health?.latency ? `${account.health.latency.toFixed(0)}ms` : '—'}</span></td>
+      <td style={s.cell}><span className="mono" style={s.monoVal}>{account.health?.totalRequests ?? 0}</span></td>
+      <td style={s.cell}>
+        <div style={s.actions}>
+          <button onClick={onToggle} title={account.status === 'disabled' ? 'Enable' : 'Park'} style={{ ...s.actBtn, color: account.status === 'disabled' ? 'var(--success)' : 'var(--muted)' }}>
+            {account.status === 'disabled' ? <PlayIcon size={12} /> : <PauseCircleIcon size={12} />}
           </button>
-          <button
-            onClick={reauthWithPuter}
-            disabled={saving}
-            title="Re-auth with Puter"
-            style={{ ...styles.iconBtn, ...styles.iconBtnIndigo }}
-          >
-            <RefreshIcon size={14} className={saving ? 'spin' : undefined} />
+          <button onClick={reauthWithPuter} disabled={saving} title="Re-auth" style={s.actBtn}>
+            <RefreshIcon size={12} className={saving ? 'spin' : undefined} />
           </button>
           {confirmDelete ? (
-            <span style={styles.deleteConfirm}>
-              <button onClick={() => { onDelete(); setConfirmDelete(false); }} style={styles.confirmBtn} title="Confirm delete">
-                <CheckIcon size={14} />
-              </button>
-              <button onClick={() => setConfirmDelete(false)} style={styles.cancelBtn} title="Cancel">
-                <XIcon size={14} />
-              </button>
+            <span style={s.confirmGroup}>
+              <button onClick={() => { onDelete(); setConfirmDelete(false); }} style={s.confirmOk}><CheckIcon size={11} /></button>
+              <button onClick={() => setConfirmDelete(false)} style={s.confirmCancel}><XIcon size={11} /></button>
             </span>
           ) : (
-            <button onClick={() => setConfirmDelete(true)} title="Delete" style={{ ...styles.iconBtn, ...styles.iconBtnRed }}>
-              <TrashIcon size={14} />
-            </button>
+            <button onClick={() => setConfirmDelete(true)} title="Delete" style={{ ...s.actBtn, color: 'var(--danger)' }}><TrashIcon size={12} /></button>
           )}
-          {msg && <span style={{ ...styles.msg, color: msg.includes('error') || msg.includes('Failed') || msg.includes('Network') ? '#fb7185' : '#34d399' }}>{msg}</span>}
         </div>
+        {msg && <div style={s.msg} className="mono">{msg}</div>}
       </td>
     </tr>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  row: {
-    borderBottom: '1px solid var(--glass-border)',
-  },
-  cell: {
-    padding: '14px 16px',
-    verticalAlign: 'middle',
-  },
-  accountCell: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: '50%',
-    flexShrink: 0,
-  },
-  name: {
-    fontSize: 14,
-    fontWeight: 600,
-    letterSpacing: '-0.01em',
-  },
-  id: {
-    fontSize: 11,
-    color: 'var(--muted-foreground)',
-    fontFamily: "'JetBrains Mono', monospace",
-    marginTop: 1,
-  },
-  badge: {
-    padding: '4px 10px',
-    borderRadius: 9999,
-    fontSize: 10,
-    fontWeight: 600,
-    textTransform: 'uppercase',
-    letterSpacing: '0.04em',
-    whiteSpace: 'nowrap',
-  },
-  quotaCell: {
-    minWidth: 140,
-  },
-  quotaTop: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  quotaValue: {
-    fontSize: 12,
-    fontWeight: 600,
-    fontFamily: "'JetBrains Mono', monospace",
-  },
-  quotaLimit: {
-    color: 'var(--muted-foreground)',
-    fontWeight: 400,
-  },
-  quotaPct: {
-    fontSize: 10,
-    color: 'var(--muted-foreground)',
-  },
-  barBg: {
-    height: 6,
-    background: 'var(--secondary)',
-    borderRadius: 9999,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 9999,
-    transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-  },
-  mono: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: 12,
-    fontWeight: 500,
-  },
-  actions: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-  },
-  iconBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    border: '1px solid var(--glass-border)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    background: 'var(--input-bg)',
-    transition: 'all 0.2s',
-  },
-  iconBtnGreen: {
-    color: '#34d399',
-  },
-  iconBtnRed: {
-    color: '#fb7185',
-  },
-  iconBtnIndigo: {
-    color: '#a5b4fc',
-  },
-  deleteConfirm: {
-    display: 'flex',
-    gap: 4,
-  },
-  confirmBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    border: 'none',
-    background: '#059669',
-    color: '#fff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-  },
-  cancelBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    border: '1px solid var(--glass-border)',
-    background: 'transparent',
-    color: 'var(--muted-foreground)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-  },
-  msg: {
-    fontSize: 11,
-    fontWeight: 500,
-    marginLeft: 4,
-    maxWidth: 160,
-  },
+const s: Record<string, React.CSSProperties> = {
+  row: { borderBottom: '1px solid var(--border)', background: 'var(--card)', transition: 'background 0.15s' },
+  cell: { padding: '12px 14px', verticalAlign: 'middle' },
+  idCell: { display: 'flex', alignItems: 'center', gap: 10, minWidth: 180 },
+  rail: { width: 3, alignSelf: 'stretch', minHeight: 38, borderRadius: 999, flexShrink: 0 },
+  dot: { width: 8, height: 8, borderRadius: 999, flexShrink: 0, border: '1.5px solid var(--card)' },
+  nameRow: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  name: { fontFamily: 'var(--display)', fontWeight: 700, fontSize: 13, letterSpacing: '-0.01em', color: 'var(--fg)' },
+  statusBadge: { fontFamily: 'var(--mono)', fontSize: 9, fontWeight: 800, letterSpacing: '0.08em', padding: '2px 6px', borderRadius: 999, border: '1px solid', whiteSpace: 'nowrap' },
+  id: { fontSize: 10, color: 'var(--muted)', marginTop: 2, letterSpacing: '0.02em' },
+  statusPill: { fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 800, letterSpacing: '0.08em', padding: '4px 8px', borderRadius: 999, border: '1px solid', whiteSpace: 'nowrap' },
+  quotaCell: { minWidth: 150 },
+  quotaTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6 },
+  quotaVal: { fontSize: 11, fontWeight: 800, letterSpacing: '-0.02em' },
+  quotaSlash: { color: 'var(--muted)', fontWeight: 500 },
+  quotaPct: { fontSize: 9, fontWeight: 800, letterSpacing: '0.08em' },
+  segTrack: { display: 'flex', gap: 3 },
+  seg: { flex: 1, height: 8, borderRadius: 2, transition: 'background 0.3s', border: '1px solid rgba(0,0,0,0.06)' },
+  monoVal: { fontSize: 12, fontWeight: 700 },
+  actions: { display: 'flex', alignItems: 'center', gap: 6 },
+  actBtn: { width: 28, height: 28, borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--fg)', flexShrink: 0 },
+  confirmGroup: { display: 'flex', gap: 4 },
+  confirmOk: { width: 28, height: 28, borderRadius: 8, border: '1px solid var(--success)', background: 'var(--success)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  confirmCancel: { width: 28, height: 28, borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--card)', color: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  msg: { fontSize: 10, fontWeight: 700, marginTop: 4, color: 'var(--muted)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
 };

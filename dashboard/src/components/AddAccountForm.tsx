@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { KeyIcon, PlusIcon, XIcon } from './icons';
 
-interface Props {
-  onAdded: () => void;
-}
+interface Props { onAdded: () => void; }
 
 function getPuterToken(puter: any): string | null {
   if (puter?.auth?.getToken) return puter.auth.getToken();
@@ -19,28 +17,16 @@ export default function AddAccountForm({ onAdded }: Props) {
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const close = () => {
-    setOpen(false);
-    setMessage('');
-    setIsError(false);
-  };
+  const close = () => { setOpen(false); setMessage(''); setIsError(false); };
 
   const signInWithPuter = async () => {
-    if (!name.trim()) {
-      setMessage('Enter an account name first');
-      setIsError(true);
-      return;
-    }
-    setSaving(true);
-    setMessage('');
-    setIsError(false);
+    if (!name.trim()) { setMessage('Enter a unit name first'); setIsError(true); return; }
+    setSaving(true); setMessage(''); setIsError(false);
     try {
       const puter = (window as any).puter;
       if (!puter?.auth) throw new Error('Puter.js failed to load');
@@ -50,85 +36,69 @@ export default function AddAccountForm({ onAdded }: Props) {
       setSaving(false);
       await submitToken(name.trim(), token);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Sign-in failed — popup blocked?');
-      setIsError(true);
-    } finally {
-      setSaving(false);
-    }
+      setMessage(err instanceof Error ? err.message : 'Sign-in failed — popup blocked?'); setIsError(true);
+    } finally { setSaving(false); }
   };
 
   const submitToken = async (accountName: string, token: string) => {
     setSaving(true);
     try {
-      const res = await fetch('/api/accounts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: accountName, token }),
-      });
+      const res = await fetch('/api/accounts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: accountName, token }) });
       const data = await res.json();
       const verification = data.verification;
-      if (verification?.valid) {
-        setName('');
-        onAdded();
-        close();
-      } else {
-        setMessage(verification?.error || 'Token invalid — try again');
-        setIsError(true);
-        onAdded();
-      }
-    } catch {
-      setMessage('Network error');
-      setIsError(true);
-    } finally {
-      setSaving(false);
-    }
+      if (verification?.valid) { setName(''); onAdded(); close(); }
+      else { setMessage(verification?.error || 'Token invalid — try again'); setIsError(true); onAdded(); }
+    } catch { setMessage('Network error'); setIsError(true); } finally { setSaving(false); }
   };
 
   return (
     <>
-      <button onClick={() => setOpen(true)} style={styles.addBtn}>
-        <PlusIcon size={14} />
-        <span>Add Account</span>
+      <button onClick={() => setOpen(true)} style={s.addBtn}>
+        <PlusIcon size={13} />
+        <span className="mono">ADD CARTRIDGE</span>
       </button>
 
       {open && (
-        <div style={styles.overlay} onClick={close}>
-          <div className="glass-panel" style={styles.modal} onClick={e => e.stopPropagation()}>
-            <div style={styles.header}>
-              <div style={styles.headerTitle}>
-                <div style={styles.iconBox}>
-                  <KeyIcon size={16} />
-                </div>
+        <div style={s.overlay} onClick={close}>
+          <div className="depot-card" style={s.modal} onClick={e => e.stopPropagation()}>
+            <div style={s.head}>
+              <div style={s.headLeft}>
+                <span style={s.iconBox}><KeyIcon size={16} /></span>
                 <div>
-                  <div style={styles.title}>Add Account</div>
-                  <div style={styles.sub}>Connect a Puter account to the pool</div>
+                  <div style={s.title}>Slot new cartridge</div>
+                  <div style={s.sub} className="mono">Puter auth is handled in the popup — no manual token paste.</div>
                 </div>
               </div>
-              <button onClick={close} style={styles.closeBtn}>
-                <XIcon size={16} />
-              </button>
+              <button onClick={close} style={s.closeBtn}><XIcon size={14} /></button>
             </div>
-            <div style={styles.form}>
+
+            <div style={s.body}>
+              <label style={s.label} className="mono">UNIT LABEL</label>
               <input
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="Account name (e.g. My Account)"
-                className="glass-input"
-                style={styles.input}
+                placeholder="e.g. ops-alpha · team-2 · personal"
+                style={s.input}
                 autoFocus
               />
-              <button onClick={signInWithPuter} disabled={saving} style={styles.puterBtn}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ marginRight: 8 }}>
-                  <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" stroke="currentColor" strokeWidth="2" fill="none" />
-                  <path d="M12 12l-8-4 8-4 8 4-8 4z" fill="currentColor" opacity="0.3" />
-                </svg>
-                {saving ? 'Signing in...' : 'Sign in with Puter'}
+              <div style={s.hint} className="mono">Use a short bay name. You can rename by re-adding later.</div>
+
+              <button onClick={signInWithPuter} disabled={saving} style={{ ...s.puterBtn, opacity: saving ? 0.7 : 1 }}>
+                <span style={s.puterLogo}>◒</span>
+                {saving ? 'Opening Puter…' : 'Sign in with Puter →'}
               </button>
+
               {message && (
-                <div style={{ ...styles.message, color: isError ? '#fb7185' : '#34d399' }}>
+                <div style={{ ...s.message, background: isError ? 'rgba(255,59,31,0.08)' : 'rgba(0,168,90,0.08)', borderColor: isError ? 'rgba(255,59,31,0.20)' : 'rgba(0,168,90,0.20)', color: isError ? 'var(--danger)' : 'var(--success)' }} className="mono">
                   {message}
                 </div>
               )}
+
+              <div style={s.steps} className="mono">
+                <span>1 — Label the bay</span>
+                <span>2 — Puter popup</span>
+                <span>3 — Auto-verified</span>
+              </div>
             </div>
           </div>
         </div>
@@ -137,115 +107,22 @@ export default function AddAccountForm({ onAdded }: Props) {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  addBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 7,
-    padding: '9px 16px',
-    borderRadius: 10,
-    border: 'none',
-    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-  },
-  overlay: {
-    position: 'fixed',
-    inset: 0,
-    background: 'rgba(2, 6, 23, 0.7)',
-    backdropFilter: 'blur(4px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 100,
-    padding: 16,
-    animation: 'fadeIn 0.2s ease',
-  },
-  modal: {
-    width: '100%',
-    maxWidth: 400,
-    borderRadius: 16,
-    padding: 24,
-    border: '1px solid var(--glass-border)',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  headerTitle: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-  },
-  iconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
-    background: 'rgba(99, 102, 241, 0.15)',
-    color: '#818cf8',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: 700,
-    letterSpacing: '-0.01em',
-  },
-  sub: {
-    fontSize: 12,
-    color: 'var(--muted-foreground)',
-    marginTop: 2,
-  },
-  closeBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    border: '1px solid var(--glass-border)',
-    background: 'var(--input-bg)',
-    color: 'var(--muted-foreground)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 12,
-  },
-  input: {
-    padding: '11px 14px',
-    borderRadius: 10,
-    color: 'var(--foreground)',
-    fontSize: 14,
-    fontFamily: 'inherit',
-    width: '100%',
-    boxSizing: 'border-box',
-  },
-  puterBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '11px 20px',
-    borderRadius: 10,
-    border: 'none',
-    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)',
-  },
-  message: {
-    fontSize: 13,
-    fontWeight: 500,
-  },
+const s: Record<string, React.CSSProperties> = {
+  addBtn: { display: 'inline-flex', alignItems: 'center', gap: 7, padding: '9px 14px', borderRadius: 10, border: '1.5px solid var(--ink)', background: 'var(--signal)', color: 'white', fontSize: 12, fontWeight: 800, letterSpacing: '0.06em', cursor: 'pointer', boxShadow: '3px 3px 0 var(--ink)', transition: 'all 0.12s' },
+  overlay: { position: 'fixed', inset: 0, background: 'rgba(12,15,18,0.55)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 16 },
+  modal: { width: '100%', maxWidth: 440, borderRadius: 14, overflow: 'hidden', padding: 0 },
+  head: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, padding: '16px 16px', borderBottom: '1.5px solid var(--border)', background: 'var(--paper-2)' },
+  headLeft: { display: 'flex', gap: 12, alignItems: 'flex-start' },
+  iconBox: { width: 38, height: 38, borderRadius: 9, background: 'var(--ink)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid var(--ink)', flexShrink: 0 },
+  title: { fontFamily: 'var(--display)', fontSize: 15, fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--fg)' },
+  sub: { fontSize: 11, color: 'var(--muted)', marginTop: 2, lineHeight: 1.4 },
+  closeBtn: { width: 30, height: 30, borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--muted)', flexShrink: 0 },
+  body: { padding: '16px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 },
+  label: { fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--muted)' },
+  input: { padding: '11px 12px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--paper-2)', fontSize: 13, fontFamily: 'var(--sans)', outline: 'none', width: '100%' },
+  hint: { fontSize: 10, fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.04em' },
+  puterBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 16px', borderRadius: 10, border: '1.5px solid var(--ink)', background: 'var(--ink)', color: 'white', fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em', cursor: 'pointer', boxShadow: '3px 3px 0 var(--border)', marginTop: 4 },
+  puterLogo: { width: 22, height: 22, borderRadius: 6, background: 'white', color: 'var(--ink)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900 },
+  message: { fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', padding: '10px 12px', borderRadius: 10, border: '1px solid', lineHeight: 1.4 },
+  steps: { display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 9, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--muted)', borderTop: '1px dashed var(--border)', paddingTop: 10, marginTop: 2 },
 };

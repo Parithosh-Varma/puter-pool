@@ -1,151 +1,96 @@
-import {
-  ArrowsSpinIcon,
-  ChartPieIcon,
-  CheckIcon,
-  TrendingUpIcon,
-} from './icons';
+import { ArrowsSpinIcon, ChartPieIcon, CheckIcon, TrendingUpIcon } from './icons';
 
-interface Props {
-  current: string;
-  onSet: (strategy: string) => void;
-}
+interface Props { current: string; onSet: (strategy: string) => void; }
 
 const OPTIONS = [
   {
     value: 'round-robin',
     name: 'Round Robin',
-    desc: 'Requests are distributed evenly across all healthy accounts, one after the other.',
+    mono: 'RR-01',
+    desc: 'Even spread. Each healthy unit takes the next turn in order.',
     Icon: ArrowsSpinIcon,
   },
   {
     value: 'least-used',
     name: 'Least Used',
-    desc: 'The account with the most remaining quota handles the next request, preserving credits.',
+    mono: 'LU-02',
+    desc: 'Quota-aware. Most remaining credit handles the next request.',
     Icon: ChartPieIcon,
   },
 ];
 
 export default function StrategyControl({ current, onSet }: Props) {
-  const currentName = OPTIONS.find(o => o.value === current)?.name ?? 'Round Robin';
-
   return (
-    <div style={styles.container}>
-      <div style={styles.optionList}>
+    <div style={s.wrap}>
+      <div style={s.rail} aria-hidden>
+        <span style={s.railLabel} className="mono">SELECTOR</span>
+        <span style={s.railLine} />
+      </div>
+      <div style={s.list}>
         {OPTIONS.map(opt => {
           const active = current === opt.value;
           return (
             <button
               key={opt.value}
               onClick={() => onSet(opt.value)}
-              style={{
-                ...styles.option,
-                ...(active ? styles.optionActive : {}),
-              }}
+              style={{ ...s.option, ...(active ? s.active : {}) }}
             >
-              <div style={{ ...styles.optIcon, ...(active ? styles.optIconActive : {}) }}>
-                <opt.Icon size={16} />
+              <div style={s.optHead}>
+                <span style={s.monoTag} className="mono">{opt.mono}</span>
+                <span style={{ ...s.radio, ...(active ? s.radioOn : {}) }}>
+                  {active && <span style={s.radioDot} />}
+                </span>
               </div>
-              <div style={styles.optBody}>
-                <div style={styles.optName}>{opt.name}</div>
-                <div style={styles.optDesc}>{opt.desc}</div>
+              <div style={s.optBody}>
+                <span style={{ ...s.optIcon, ...(active ? s.optIconOn : {}) }}><opt.Icon size={14} /></span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={s.optName}>{opt.name}</div>
+                  <div style={s.optDesc}>{opt.desc}</div>
+                </div>
               </div>
-              <div style={{ ...styles.optCheck, ...(active ? styles.optCheckActive : {}) }}>
-                {active && <CheckIcon size={12} />}
-              </div>
+              {active && <span style={s.check}><CheckIcon size={10} /></span>}
             </button>
           );
         })}
       </div>
-      <div style={styles.failoverRow}>
-        <TrendingUpIcon size={13} />
-        <span>
-          Auto-failover: <strong>{currentName}</strong> falls back to the next healthy account on 5xx or quota exhaustion.
-        </span>
+      <div style={s.note} className="mono">
+        <TrendingUpIcon size={11} />
+        <span>Failover is automatic — on 5xx or empty quota, rail skips to next healthy bay.</span>
       </div>
     </div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 14,
-  },
-  optionList: {
+const s: Record<string, React.CSSProperties> = {
+  wrap: { display: 'flex', flexDirection: 'column', gap: 12 },
+  rail: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 2 },
+  railLabel: { fontSize: 9, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--muted)', background: 'var(--paper-2)', border: '1px solid var(--border)', padding: '3px 7px', borderRadius: 999 },
+  railLine: { flex: 1, height: 1, background: 'var(--border)' },
+  list: { display: 'flex', flexDirection: 'column', gap: 10 },
+  option: {
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     gap: 10,
-  },
-  option: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: 12,
-    padding: '12px',
+    padding: '12px 12px',
     borderRadius: 10,
-    border: '1px solid var(--glass-border)',
-    background: 'var(--input-bg)',
+    border: '1.5px solid var(--border)',
+    background: 'var(--card)',
     cursor: 'pointer',
     textAlign: 'left',
-    transition: 'all 0.2s',
+    transition: 'all 0.15s',
   },
-  optionActive: {
-    borderColor: 'rgba(99, 102, 241, 0.5)',
-    background: 'rgba(99, 102, 241, 0.1)',
-  },
-  optIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: 'rgba(148, 163, 184, 0.12)',
-    color: '#94a3b8',
-    flexShrink: 0,
-    transition: 'all 0.2s',
-  },
-  optIconActive: {
-    background: 'rgba(99, 102, 241, 0.2)',
-    color: '#a5b4fc',
-  },
-  optBody: {
-    flex: 1,
-  },
-  optName: {
-    fontSize: 13,
-    fontWeight: 600,
-    marginBottom: 3,
-  },
-  optDesc: {
-    fontSize: 12,
-    lineHeight: 1.5,
-    color: 'var(--muted-foreground)',
-  },
-  optCheck: {
-    width: 18,
-    height: 18,
-    borderRadius: 999,
-    border: '2px solid var(--glass-border)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    marginTop: 2,
-  },
-  optCheckActive: {
-    borderColor: '#6366f1',
-    background: '#6366f1',
-    color: '#ffffff',
-  },
-  failoverRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    fontSize: 11,
-    color: 'var(--muted-foreground)',
-    lineHeight: 1.5,
-    borderTop: '1px solid var(--glass-border)',
-    paddingTop: 12,
-  },
+  active: { borderColor: 'var(--ink)', background: 'var(--ink)', color: 'var(--paper)', boxShadow: '3px 3px 0 var(--border)' },
+  optHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  monoTag: { fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', padding: '3px 6px', borderRadius: 6, background: 'rgba(0,0,0,0.06)', border: '1px solid var(--border)' },
+  radio: { width: 18, height: 18, borderRadius: 999, border: '1.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--card)', flexShrink: 0 },
+  radioOn: { borderColor: 'var(--paper)', background: 'var(--paper)' },
+  radioDot: { width: 8, height: 8, borderRadius: 999, background: 'var(--ink)', display: 'block' },
+  optBody: { display: 'flex', gap: 10, alignItems: 'flex-start' },
+  optIcon: { width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--paper-2)', border: '1px solid var(--border)', color: 'var(--muted)', flexShrink: 0 },
+  optIconOn: { background: 'rgba(255,255,255,0.10)', borderColor: 'rgba(255,255,255,0.18)', color: 'var(--paper)' },
+  optName: { fontFamily: 'var(--display)', fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em', lineHeight: 1.1 },
+  optDesc: { fontSize: 11, lineHeight: 1.5, opacity: 0.75, marginTop: 3 },
+  check: { position: 'absolute', top: 10, right: 10, width: 18, height: 18, borderRadius: 999, background: 'var(--success)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  note: { display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 10, lineHeight: 1.5, color: 'var(--muted)', fontWeight: 600, borderTop: '1px dashed var(--border)', paddingTop: 10 },
 };

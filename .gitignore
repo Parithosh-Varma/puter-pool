@@ -7,6 +7,11 @@ coverage/
 .vite/
 dashboard/dist/
 dashboard/node_modules/
+data/*.db
+data/*.db-journal
+landing/
+*.tsbuildinfo
+.opencode/
 
 .DS_Store
 public/
