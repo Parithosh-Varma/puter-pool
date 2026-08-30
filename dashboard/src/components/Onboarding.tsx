@@ -76,7 +76,7 @@ const s: Record<string, React.CSSProperties> = {
   dot: { width: 7, height: 7, borderRadius: 999, background: 'var(--border)', transition: 'all 0.2s', border: '1px solid var(--border)' },
   dotActive: { width: 22, background: 'var(--ink)', borderColor: 'var(--ink)' },
   actions: { display: 'flex', justifyContent: 'center', gap: 10 },
-  btn: { padding: '10px 18px', borderRadius: 10, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', cursor: 'pointer', border: '1.5px solid transparent', transition: 'all 0.15s', minWidth: 110 },
+  btn: { padding: '10px 18px', borderRadius: 10, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', cursor: 'pointer', borderWidth: '1.5px', borderStyle: 'solid', borderColor: 'transparent', transition: 'all 0.15s', minWidth: 110 },
   btnPrimary: { background: 'var(--ink)', color: 'white', borderColor: 'var(--ink)', boxShadow: '3px 3px 0 var(--border)' },
   btnGhost: { background: 'var(--card)', borderColor: 'var(--border)', color: 'var(--muted)' },
   progressTrack: { height: 4, background: 'var(--paper-2)', borderRadius: 999, overflow: 'hidden', marginTop: 18, border: '1px solid var(--border)' },
