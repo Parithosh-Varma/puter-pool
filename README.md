@@ -27,6 +27,8 @@
 </p>
 
 ---
+## How it works
+Basically this tool helps you exploit puter free 0.25$ ai credits, and pool them to a api endpoint which you can use for your coding agents such as opencode etc
 
 ## ✨ Features
 
