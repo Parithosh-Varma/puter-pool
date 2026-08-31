@@ -30,6 +30,9 @@
 ## How it works
 Basically this tool helps you exploit puter free 0.25$ ai credits, and pool them to a api endpoint which is compatible for openAI as well as Anthropic which you can use for your coding agents such as opencode etc
 
+## disclaimer
+puter now asks for phone verification that may affect how many accounts you create.
+
 ## ✨ Features
 
 | Feature | Description |
