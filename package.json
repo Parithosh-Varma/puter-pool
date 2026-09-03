@@ -4,8 +4,8 @@
   "description": "Production-ready account pool manager for Puter.js AI accounts",
   "main": "dist/index.js",
   "bin": {
-    "puter-pool": "./dist/index.js",
-    "puter": "./dist/index.js"
+    "puter-pool": "./bin/puter-pool.js",
+    "puter": "./bin/puter-pool.js"
   },
   "scripts": {
     "build": "tsc",

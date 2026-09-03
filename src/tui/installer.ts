@@ -69,7 +69,9 @@ const logText = new TextRenderable(renderer, {
 });
 
 function renderSteps() {
-  listBox.children.slice().forEach(c => listBox.remove(c));
+  // @ts-ignore — children is internal in some versions
+  const kids: any[] = (listBox as any).children ? [...(listBox as any).children] : [];
+  kids.forEach((c: any) => listBox.remove(c));
   steps.forEach((s, i) => {
     const state = status[s.id] || (i < current ? "done" : i === current ? "run" : "pending");
     const icon = state === "done" ? "✔" : state === "run" ? "◐" : "○";
