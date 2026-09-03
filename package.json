@@ -12,7 +12,7 @@
     "start": "lsof -ti:3000 2>/dev/null | xargs kill -9 2>/dev/null || true; node dist/index.js",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "lsof -ti:3000 2>/dev/null | xargs kill -9 2>/dev/null || true; tsx watch src/index.ts",
-    "dev:client": "lsof -ti:5173 2>/dev/null | xargs kill -9 2>/dev/null || true; lsof -ti:5174 2>/dev/null | xargs kill -9 2>/dev/null || true; vite --config dashboard/vite.config.ts --strictPort --port 5173",
+    "dev:client": "lsof -ti:5173 2>/dev/null | xargs kill -9 2>/dev/null || true; lsof -ti:5174 2>/dev/null | xargs kill -9 2>/dev/null || true; vite --config dashboard/vite.config.ts --strictPort --port 5173 --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
