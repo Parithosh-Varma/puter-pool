@@ -156,7 +156,7 @@ const s: Record<string, React.CSSProperties> = {
   emptyMini: { height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, letterSpacing: '0.12em', fontWeight: 800, color: 'var(--muted)', border: '1px dashed var(--border)', borderRadius: 10, background: 'var(--paper-2)' },
   liveFoot: { display: 'flex', justifyContent: 'space-between', fontSize: 9, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--muted)', borderTop: '1px dashed var(--border)', paddingTop: 8 },
   liveFootDot: { color: 'var(--fg)' },
-  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gridAutoFlow: 'dense', gap: 12 },
   card: { padding: 14, borderRadius: 12 },
   cardHead: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   cardEyebrow: { fontSize: 10, fontWeight: 800, letterSpacing: '0.12em', color: 'var(--muted)' },

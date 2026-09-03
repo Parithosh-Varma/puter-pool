@@ -10,9 +10,11 @@ import AddAccountForm from './components/AddAccountForm';
 import Chat from './components/Chat';
 import AdSlot from './components/AdSlot';
 import Onboarding from './components/Onboarding';
+import Logs from './components/Logs';
 import {
-  SunIcon,
+   SunIcon,
   MoonIcon,
+  ArrowsSpinIcon,
   GithubIcon,
   RefreshIcon,
   HelpCircleIcon,
@@ -25,17 +27,20 @@ import {
 
 type Tab = 'dashboard' | 'chat';
 
-function getInitialTheme(): 'dark' | 'light' {
+function getInitialTheme(): 'dark' | 'light' | 'system' {
   const saved = localStorage.getItem('theme');
-  if (saved === 'dark' || saved === 'light') return saved;
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  if (saved === 'dark' || saved === 'light' || saved === 'system') return saved;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 const QUEUE_CAPACITY = 128;
 
 function AppContent() {
   const [tab, setTab] = useState<Tab>('dashboard');
-  const [theme, setTheme] = useState<'dark' | 'light'>(getInitialTheme);
+  const [theme, setTheme] = useState<'dark' | 'light' | 'system'>(getInitialTheme);
+  const [systemTheme, setSystemTheme] = useState<'dark' | 'light'>(
+    () => window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  );
   const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem('onboarding_done') !== 'true');
   const { user, idToken, logout, enterLocal } = useAuth();
   useEffect(() => { if (!user) enterLocal(); }, []); // tool is localhost-only — auto-enter local, no landing gate
@@ -56,11 +61,20 @@ function AppContent() {
   } = useApi(effectiveIdToken);
   const [now, setNow] = useState(Date.now());
   const [copied, setCopied] = useState(false);
+  const resolvedTheme = theme === 'system' ? systemTheme : theme;
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', resolvedTheme);
+    document.documentElement.style.colorScheme = resolvedTheme;
     localStorage.setItem('theme', theme);
-  }, [theme]);
+  }, [resolvedTheme, theme]);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? 'dark' : 'light');
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -154,8 +168,8 @@ function AppContent() {
             {user?.uid === 'local' && (
               <span style={{ ...s.userPill, padding: '6px 10px', fontSize: 11, fontWeight: 700 }} className="mono">LOCAL ✓</span>
             )}
-            <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={s.iconBtn} aria-label="Toggle theme">
-              {theme === 'dark' ? <SunIcon size={15} /> : <MoonIcon size={15} />}
+            <button onClick={() => setTheme(theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light')} style={s.iconBtn} aria-label="Toggle theme" title={`Theme: ${theme}`}>
+              {theme === 'dark' ? <SunIcon size={15} /> : theme === 'light' ? <MoonIcon size={15} /> : <ArrowsSpinIcon size={15} />}
             </button>
             <button onClick={() => setShowOnboarding(true)} style={s.iconBtn} aria-label="How to use"><HelpCircleIcon size={15} /></button>
             <a href="https://github.com/Parithosh-Varma/puter-pool" target="_blank" rel="noopener noreferrer" style={s.ghostBtn}>
@@ -277,8 +291,6 @@ function AppContent() {
             <>
               {stats && <Statistics stats={stats} />}
 
-              <AdSlot slot="1" format="square" />
-
               {dashboardData && (
                 <>
                   <div style={s.bento} className="depot-bento">
@@ -371,7 +383,8 @@ function AppContent() {
                     </div>
                   </div>
 
-                  <UsageGraph requests={dashboardData.recentRequests} theme={theme} />
+                  <UsageGraph requests={dashboardData.recentRequests} theme={resolvedTheme} />
+                  <Logs />
                 </>
               )}
 
@@ -442,7 +455,7 @@ const s: Record<string, React.CSSProperties> = {
   topbarCenter: { display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
   segment: { display: 'flex', gap: 4, padding: 4, background: 'var(--paper-2)', border: '1.5px solid var(--border)', borderRadius: 999 },
   segBtn: { display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 999, border: '1px solid transparent', background: 'transparent', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', cursor: 'pointer', color: 'var(--muted)', transition: 'all 0.15s' },
-  segActive: { background: 'var(--ink)', color: 'var(--paper)', borderColor: 'var(--ink)', boxShadow: '0 2px 10px rgba(0,0,0,0.12)' },
+  segActive: { background: 'var(--ink)', color: 'var(--paper)', border: '1px solid var(--ink)', boxShadow: '0 2px 10px rgba(0,0,0,0.12)' },
   segDot: { width: 7, height: 7, borderRadius: 999, background: 'currentColor', opacity: 0.5, display: 'inline-block' } as any,
   statusPill: { display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderRadius: 999, border: '1.5px solid var(--border)', background: 'var(--card)', whiteSpace: 'nowrap' },
   statusLedWrap: { position: 'relative', width: 8, height: 8, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },

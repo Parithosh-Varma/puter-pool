@@ -72,6 +72,7 @@ export function loadConfig(): AppConfig {
     logLevel: parseLogLevel(),
     logFile: process.env.LOG_FILE || 'logs/account-pool.log',
     apiKey: process.env.API_KEY || 'dev-api-key',
+    groqApiKey: process.env.GROQ_API_KEY || '',
     googleClientId: process.env.GOOGLE_CLIENT_ID || '275728447491-g2f03lsnon3rritavjsbdg5pmeaj3hsa.apps.googleusercontent.com',
   };
 

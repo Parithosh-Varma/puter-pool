@@ -16,3 +16,4 @@ landing/
 .DS_Store
 public/
 assets/
+dashboard/tsconfig.tsbuildinfo

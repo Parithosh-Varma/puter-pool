@@ -29,25 +29,27 @@ export default function AddAccountForm({ onAdded }: Props) {
     setSaving(true); setMessage(''); setIsError(false);
     try {
       const puter = (window as any).puter;
-      if (!puter?.auth) throw new Error('Puter.js failed to load');
+      if (!puter?.auth) throw new Error('Puter.js failed to load — refresh and retry');
       await puter.auth.signIn();
-      const token = getPuterToken(puter);
-      if (!token) throw new Error('No Puter token received');
-      setSaving(false);
-      await submitToken(name.trim(), token);
+      const t = getPuterToken(puter);
+      if (!t) throw new Error('No Puter token received — popup closed?');
+      await submitToken(name.trim(), t);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Sign-in failed — popup blocked?'); setIsError(true);
+      setMessage(err instanceof Error ? err.message : 'Sign-in failed — popup blocked? Allow puter.com'); setIsError(true);
     } finally { setSaving(false); }
   };
 
-  const submitToken = async (accountName: string, token: string) => {
-    setSaving(true);
+  const submitToken = async (accountName: string, tok: string) => {
+    setSaving(true); setMessage(''); setIsError(false);
     try {
-      const res = await fetch('/api/accounts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: accountName, token }) });
+      const res = await fetch('/api/accounts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: accountName, token: tok }) });
       const data = await res.json();
       const verification = data.verification;
       if (verification?.valid) { setName(''); onAdded(); close(); }
-      else { setMessage(verification?.error || 'Token invalid — try again'); setIsError(true); onAdded(); }
+      else {
+        const errMsg = verification?.error || 'Sign-in token rejected';
+        setMessage(errMsg); setIsError(true); onAdded();
+      }
     } catch { setMessage('Network error'); setIsError(true); } finally { setSaving(false); }
   };
 
@@ -65,8 +67,8 @@ export default function AddAccountForm({ onAdded }: Props) {
               <div style={s.headLeft}>
                 <span style={s.iconBox}><KeyIcon size={16} /></span>
                 <div>
-                  <div style={s.title}>Slot new cartridge</div>
-                  <div style={s.sub} className="mono">Puter auth is handled in the popup — no manual token paste.</div>
+                  <div style={s.title}>Slot new cartridge — sign in</div>
+                  <div style={s.sub} className="mono">One tap — sign in via Puter popup, no token paste.</div>
                 </div>
               </div>
               <button onClick={close} style={s.closeBtn}><XIcon size={14} /></button>
@@ -81,7 +83,7 @@ export default function AddAccountForm({ onAdded }: Props) {
                 style={s.input}
                 autoFocus
               />
-              <div style={s.hint} className="mono">Use a short bay name. You can rename by re-adding later.</div>
+              <div style={s.hint} className="mono">Use a short bay name. Popup must be allowed for puter.com.</div>
 
               <button onClick={signInWithPuter} disabled={saving} style={{ ...s.puterBtn, opacity: saving ? 0.7 : 1 }}>
                 <span style={s.puterLogo}>◒</span>
@@ -95,8 +97,8 @@ export default function AddAccountForm({ onAdded }: Props) {
               )}
 
               <div style={s.steps} className="mono">
-                <span>1 — Label the bay</span>
-                <span>2 — Puter popup</span>
+                <span>1 — Label</span>
+                <span>2 — Allow popup</span>
                 <span>3 — Auto-verified</span>
               </div>
             </div>
@@ -120,8 +122,12 @@ const s: Record<string, React.CSSProperties> = {
   body: { padding: '16px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 },
   label: { fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--muted)' },
   input: { padding: '11px 12px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--paper-2)', fontSize: 13, fontFamily: 'var(--sans)', outline: 'none', width: '100%' },
+  textarea: { padding: '11px 12px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--paper-2)', fontSize: 12, fontFamily: 'var(--mono)', outline: 'none', width: '100%', resize: 'vertical', minHeight: 72, wordBreak: 'break-all' },
   hint: { fontSize: 10, fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.04em' },
+  patHint: { fontSize: 11, color: 'var(--muted)', lineHeight: 1.5, background: 'var(--paper-2)', border: '1px solid var(--border)', padding: '8px 10px', borderRadius: 8 },
+  link: { color: 'var(--electric)', fontWeight: 700, textDecoration: 'underline', textUnderlineOffset: 2 },
   puterBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 16px', borderRadius: 10, border: '1.5px solid var(--ink)', background: 'var(--ink)', color: 'white', fontSize: 13, fontWeight: 800, letterSpacing: '-0.01em', cursor: 'pointer', boxShadow: '3px 3px 0 var(--border)', marginTop: 4 },
+  ghostPuterBtn: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '9px 12px', borderRadius: 10, border: '1px dashed var(--border)', background: 'var(--card)', color: 'var(--muted)', fontSize: 11, fontWeight: 700, cursor: 'pointer', width: '100%' },
   puterLogo: { width: 22, height: 22, borderRadius: 6, background: 'white', color: 'var(--ink)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900 },
   message: { fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', padding: '10px 12px', borderRadius: 10, border: '1px solid', lineHeight: 1.4 },
   steps: { display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: 9, fontWeight: 800, letterSpacing: '0.08em', color: 'var(--muted)', borderTop: '1px dashed var(--border)', paddingTop: 10, marginTop: 2 },

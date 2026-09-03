@@ -380,6 +380,11 @@ export function createRouter(
         }
       }
 
+      models.push(
+        { id: 'groq/llama-3.3-70b-versatile', name: 'groq/llama-3.3-70b-versatile', provider: 'groq', description: 'Groq Llama 3.3 70B — ultrafast inference' },
+        { id: 'groq/gemma-2-9b-it', name: 'groq/gemma-2-9b-it', provider: 'groq', description: 'Groq Gemma 2 9B — fast and efficient' },
+      );
+
       models.sort((a, b) => a.id.localeCompare(b.id));
       res.json({ models, total: models.length });
     } catch (err) {

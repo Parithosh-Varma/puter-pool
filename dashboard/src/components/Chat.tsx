@@ -10,6 +10,7 @@ const PROVIDER_COLORS: Record<string, string> = {
   qwen: '#00A85A',
   openai: '#FF3B1F',
   meta: '#7A5CFF',
+  groq: '#FF6B35',
 };
 
 export default function Chat() {
@@ -19,7 +20,7 @@ export default function Chat() {
   ]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
-  const [model, setModel] = useState('claude-fable-5');
+  const [model, setModel] = useState('openai/gpt-5-nano');
   const [feedModels, setFeedModels] = useState<FeedModel[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [search, setSearch] = useState('');
@@ -31,6 +32,21 @@ export default function Chat() {
   useEffect(() => {
     fetch('/api/models', { headers: authHeaders() }).then(r => r.json()).then(d => setFeedModels(d.models || [])).catch(() => {});
   }, [idToken]);
+
+  const [puterSignedIn, setPuterSignedIn] = useState<boolean | null>(null);
+  const isPuterReady = () => typeof window !== 'undefined' && (window as any).puter?.ai?.chat && (window as any).puter?.auth?.isSignedIn;
+
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      if (!isPuterReady()) { if (!cancelled) setPuterSignedIn(null); return; }
+      try { const v = await (window as any).puter.auth.isSignedIn(); if (!cancelled) setPuterSignedIn(!!v); } catch { if (!cancelled) setPuterSignedIn(false); }
+    };
+    check();
+    const id = setInterval(check, 3000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
   useEffect(() => {
     const h = (e: MouseEvent) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowDropdown(false); };
@@ -42,17 +58,30 @@ export default function Chat() {
 
   const send = async () => {
     if (!input.trim() || sending) return;
-    const userMsg: Message = { role: 'user', content: input };
+    const prompt = input;
+    const userMsg: Message = { role: 'user', content: prompt };
     setMessages(prev => [...prev, userMsg]); setInput(''); setSending(true);
+    const t0 = Date.now();
+    const timeout = <T,>(p: Promise<T>, ms: number, label: string) => Promise.race([p, new Promise<never>((_, r) => setTimeout(() => r(new Error(label + ' timed out after ' + ms / 1000 + 's — popup blocked or network')), ms))]);
     try {
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ model, prompt: input }),
-      });
-      const data = await res.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response || 'no response', model, accountId: data.accountId, latency: data.latency, error: data.error }]);
+      if (!isPuterReady()) throw new Error('Puter.js not ready — refresh http://localhost:5173 (not file://) and allow puter.com popup; Puter.js is ' + (typeof (window as any).puter));
+      const puter = (window as any).puter;
+      const signedIn = await timeout(puter.auth.isSignedIn(), 8000, 'isSignedIn') as boolean;
+      if (!signedIn) await timeout(puter.auth.signIn(), 20000, 'signIn');
+      const stillIn = await timeout(puter.auth.isSignedIn(), 8000, 'isSignedIn') as boolean;
+      if (!stillIn) throw new Error('Sign-in required — popup was closed/blocked. Allow puter.com popups and retry');
+      const resp = await timeout((puter.ai.chat as any)(prompt, { model }), 25000, 'puter.ai.chat');
+      let text = '';
+      if (typeof resp === 'string') text = resp;
+      else if (resp?.message?.content) text = Array.isArray(resp.message.content) ? resp.message.content.map((c: any) => c.text || c.content || '').join('') : resp.message.content;
+      else if (resp?.choices?.[0]?.message?.content) text = resp.choices[0].message.content;
+      else text = resp?.text || resp?.content || JSON.stringify(resp);
+      const latency = Date.now() - t0;
+      setMessages(prev => [...prev, { role: 'assistant', content: (text && String(text).trim()) ? String(text) : 'no response (model returned empty — try gpt-5-nano)', model, accountId: 'puter:user', latency, error: text ? undefined : 'Empty response: ' + JSON.stringify(resp).slice(0, 400) }]);
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Transmission failed', error: err instanceof Error ? err.message : 'unknown' }]);
+      const msg = err instanceof Error ? `${err.message}${(err as any)?.cause ? ' — ' + (err as any).cause : ''}` : String(err);
+      console.error('[Chat] puter error', err);
+      setMessages(prev => [...prev, { role: 'assistant', content: 'ERR — ' + msg, error: msg }]);
     } finally { setSending(false); }
   };
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
@@ -99,11 +128,19 @@ export default function Chat() {
           </div>
         </div>
         <div style={s.toolbarRight} className="mono">
-          <span style={s.badge}>VIA POOL</span>
+          <span style={s.badge}>{isPuterReady() ? 'VIA PUTER (USER-PAYS)' : 'VIA POOL'}</span>
           <span style={s.badgeMuted}>{messages.length} MESSAGES</span>
         </div>
       </div>
 
+      {puterSignedIn === false && (
+        <div style={s.popupBanner} className="mono">
+          <span style={s.popupDot} /> POPUP REQUIRED — Click <button onClick={async () => { try { await (window as any).puter.auth.signIn(); setPuterSignedIn(await (window as any).puter.auth.isSignedIn()); } catch (e) { alert(String(e)); } }} style={s.popupBtn}>Sign in with Puter</button> and <strong>Allow popup for puter.com</strong> (Brave/Shields → Allow, Chrome → Pop-up blocked → Always allow). Use <code>http://localhost:5173</code> or <code>http://localhost:8000/simple-chat.html</code> — <code>file://</code> is blocked.
+        </div>
+      )}
+      {puterSignedIn === null && !isPuterReady() && (
+        <div style={s.popupBannerWarn} className="mono">Puter.js not loaded — refresh on <code>http://localhost:5173</code> (not <code>file://</code>). If you see <code>Unsupported Protocol</code>, serve via <code>python3 -m http.server</code>.</div>
+      )}
       <div style={s.tape}>
         <div style={s.tapeInner}>
           {messages.map((msg, i) => (
@@ -154,7 +191,7 @@ export default function Chat() {
           </button>
         </div>
         <div style={s.composerFoot} className="mono">
-          <span>Route retries automatically on failure.</span>
+          <span>User-pays via puter.js — instant, no 30s queue. Allow popup for puter.com.</span>
           <span style={{ opacity: 0.5 }}>ENTER to send · Model: {model}</span>
         </div>
       </div>
@@ -207,4 +244,8 @@ const s: Record<string, React.CSSProperties> = {
   textarea: { flex: 1, padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--paper-2)', fontSize: 13, fontFamily: 'var(--sans)', resize: 'none', outline: 'none', minHeight: 42, maxHeight: 120 },
   sendBtn: { padding: '11px 16px', borderRadius: 10, border: '1.5px solid var(--ink)', background: 'var(--signal)', color: 'white', fontSize: 12, cursor: 'pointer', boxShadow: '2px 2px 0 var(--ink)', flexShrink: 0 },
   composerFoot: { display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 10, fontWeight: 600, color: 'var(--muted)', maxWidth: 860, margin: '8px auto 0', width: '100%', flexWrap: 'wrap' },
+  popupBanner: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 12px', background: '#FFF7ED', border: '1.5px solid #FDB813', borderRadius: 10, fontSize: 11, lineHeight: 1.5, color: '#7C2D12' },
+  popupBannerWarn: { padding: '8px 12px', background: '#FFF1EF', border: '1.5px solid #FFC9C0', borderRadius: 10, fontSize: 11, color: '#7C2D12' },
+  popupDot: { width: 8, height: 8, borderRadius: 999, background: '#FDB813', flexShrink: 0, animation: 'ping 1.2s infinite' },
+  popupBtn: { padding: '4px 10px', borderRadius: 999, border: '1.5px solid var(--ink)', background: 'var(--ink)', color: 'white', fontSize: 11, fontWeight: 800, cursor: 'pointer' },
 };

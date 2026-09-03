@@ -30,13 +30,13 @@ export function PlayIcon({ size = 16, className }: { size?: number; className?: 
   );
 }
 
-const STATUS: Record<string, { label: string; color: string; bg: string; stripe: string }> = {
-  active: { label: 'ACTIVE', color: 'var(--success)', bg: 'rgba(0,168,90,0.10)', stripe: 'var(--success)' },
-  disabled: { label: 'PARKED', color: '#7A838F', bg: 'rgba(122,131,143,0.12)', stripe: '#7A838F' },
-  exhausted: { label: 'EMPTY', color: 'var(--warn)', bg: 'rgba(255,184,0,0.15)', stripe: 'var(--warn)' },
-  error: { label: 'ERROR', color: 'var(--danger)', bg: 'rgba(255,59,31,0.12)', stripe: 'var(--danger)' },
-  pending_verification: { label: 'VERIFYING', color: 'var(--electric)', bg: 'rgba(26,67,255,0.10)', stripe: 'var(--electric)' },
-};
+ const STATUS: Record<string, { label: string; color: string; bg: string; stripe: string }> = {
+   active: { label: 'ACTIVE', color: 'var(--success)', bg: 'rgba(0,168,90,0.10)', stripe: 'var(--success)' },
+   disabled: { label: 'PARKED', color: 'var(--muted)', bg: 'rgba(122,131,143,0.18)', stripe: 'var(--muted)' },
+   exhausted: { label: 'EMPTY', color: 'var(--warn)', bg: 'rgba(255,184,0,0.15)', stripe: 'var(--warn)' },
+   error: { label: 'ERROR', color: 'var(--danger)', bg: 'rgba(255,59,31,0.12)', stripe: 'var(--danger)' },
+   pending_verification: { label: 'VERIFYING', color: 'var(--electric)', bg: 'rgba(26,67,255,0.10)', stripe: 'var(--electric)' },
+ };
 
 export default function AccountCard({ account, onToggle, onRefresh, onDelete }: Props) {
   const [saving, setSaving] = useState(false);
@@ -137,7 +137,7 @@ const s: Record<string, React.CSSProperties> = {
   quotaSlash: { color: 'var(--muted)', fontWeight: 500 },
   quotaPct: { fontSize: 9, fontWeight: 800, letterSpacing: '0.08em' },
   segTrack: { display: 'flex', gap: 3 },
-  seg: { flex: 1, height: 8, borderRadius: 2, transition: 'background 0.3s', border: '1px solid rgba(0,0,0,0.06)' },
+   seg: { flex: 1, height: 8, borderRadius: 2, transition: 'background 0.3s', border: '1px solid var(--border)' },
   monoVal: { fontSize: 12, fontWeight: 700 },
   actions: { display: 'flex', alignItems: 'center', gap: 6 },
   actBtn: { width: 28, height: 28, borderRadius: 8, border: '1.5px solid var(--border)', background: 'var(--card)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--fg)', flexShrink: 0 },

@@ -17,8 +17,8 @@ const STEPS = [
   {
     icon: <KeyIcon size={24} />,
     kicker: 'DEPOT 03',
-    title: 'Slot a cartridge',
-    body: 'Click “Add cartridge”, name the bay (e.g. ops-alpha), then Sign in with Puter. The popup authenticates and the depot seals the token server-side.',
+    title: 'Slot a cartridge — sign in',
+    body: 'Click Add cartridge, name the bay, then Sign in with Puter in the popup. Allow popups for puter.com — no paste needed, depot grabs the session automatically.',
   },
   {
     icon: <MessageIcon size={24} />,
@@ -74,7 +74,7 @@ const s: Record<string, React.CSSProperties> = {
   body: { margin: 0, fontSize: 13.5, lineHeight: 1.6, color: 'var(--muted)', fontFamily: 'var(--sans)' },
   dots: { display: 'flex', justifyContent: 'center', gap: 6, margin: '18px 0 14px' },
   dot: { width: 7, height: 7, borderRadius: 999, background: 'var(--border)', transition: 'all 0.2s', border: '1px solid var(--border)' },
-  dotActive: { width: 22, background: 'var(--ink)', borderColor: 'var(--ink)' },
+  dotActive: { width: 22, background: 'var(--ink)', border: '1px solid var(--ink)' },
   actions: { display: 'flex', justifyContent: 'center', gap: 10 },
   btn: { padding: '10px 18px', borderRadius: 10, fontSize: 11, fontWeight: 800, letterSpacing: '0.08em', cursor: 'pointer', borderWidth: '1.5px', borderStyle: 'solid', borderColor: 'transparent', transition: 'all 0.15s', minWidth: 110 },
   btnPrimary: { background: 'var(--ink)', color: 'white', borderColor: 'var(--ink)', boxShadow: '3px 3px 0 var(--border)' },

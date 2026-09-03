@@ -155,68 +155,97 @@ export class RequestScheduler extends EventEmitter {
     });
 
     try {
-      const response = await fetch(`${config.puterApiBaseUrl}/puterai/openai/v1/chat/completions`, {
+      const isGroq = input.model.startsWith('groq/');
+      if (isGroq && !config.groqApiKey) {
+        throw new Error('GROQ_API_KEY is not configured');
+      }
+      if (isGroq) {
+        const url = 'https://api.groq.com/openai/v1/chat/completions';
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${config.groqApiKey}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'PuterAccountPoolManager/1.0',
+          },
+          body: JSON.stringify({
+            model: input.model.replace('groq/', ''),
+            messages: input.messages ?? [{ role: 'user', content: input.prompt }],
+            stream: input.stream ?? false,
+            max_tokens: input.maxTokens,
+            temperature: input.temperature,
+          }),
+          signal: AbortSignal.timeout(config.requestTimeoutMs),
+        });
+        const latency = Date.now() - startTime;
+        if (response.ok) {
+          const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
+          const content = data?.choices?.[0]?.message?.content || JSON.stringify(data);
+          log.info('RequestScheduler', `Request succeeded on ${account.id}`, { accountId: account.id, requestId, latency });
+          return { success: true, response: content, accountId: account.id, latency, retryCount: 0, statusCode: response.status, error: null };
+        }
+        const errorBody = await response.text().catch(() => '');
+        let errorMsg = `HTTP ${response.status}`;
+        if (errorBody) errorMsg += `: ${errorBody.slice(0, 200)}`;
+        if (response.status === 429 || response.status === 402) {
+          this.accountManager.setAccountStatus(account.id, 'exhausted');
+          log.warn('RequestScheduler', `Account ${account.id} rate limited/credit exhausted`, { accountId: account.id, requestId, statusCode: response.status });
+        }
+        return { success: false, response: null, accountId: account.id, latency, retryCount: 0, statusCode: response.status, error: errorMsg };
+      }
+
+      const messages = input.messages ?? [{ role: 'user', content: input.prompt }];
+      const driverBody = JSON.stringify({
+        interface: 'puter-chat-completion',
+        driver: 'ai-chat',
+        method: 'complete',
+        args: {
+          messages,
+          model: input.model,
+          stream: input.stream ?? false,
+          ...(input.maxTokens ? { max_tokens: input.maxTokens } : {}),
+          ...(input.temperature !== undefined ? { temperature: input.temperature } : {}),
+        },
+        auth_token: account.token,
+        test_mode: false,
+      });
+
+      const response = await fetch(`${config.puterApiBaseUrl}/drivers/call`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${account.token}`,
           'Content-Type': 'application/json',
           'User-Agent': 'PuterAccountPoolManager/1.0',
         },
-        body: JSON.stringify({
-          model: input.model,
-          messages: input.messages ?? [{ role: 'user', content: input.prompt }],
-          stream: input.stream ?? false,
-          max_tokens: input.maxTokens,
-          temperature: input.temperature,
-        }),
+        body: driverBody,
         signal: AbortSignal.timeout(config.requestTimeoutMs),
       });
 
       const latency = Date.now() - startTime;
+      const raw = await response.text().catch(() => '');
+      let parsed: any = null;
+      try { parsed = raw ? JSON.parse(raw) : null; } catch { parsed = null; }
 
-      if (response.ok) {
-        const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
-        const content = data?.choices?.[0]?.message?.content || JSON.stringify(data);
-
-        log.info('RequestScheduler', `Request succeeded on ${account.id}`, {
-          accountId: account.id,
-          requestId,
-          latency,
-        });
-
-        return {
-          success: true,
-          response: content,
-          accountId: account.id,
-          latency,
-          retryCount: 0,
-          statusCode: response.status,
-          error: null,
-        };
+      if (response.ok && parsed && parsed.success !== false) {
+        const result = parsed.result ?? parsed;
+        const content = result?.message?.content
+          ?? result?.choices?.[0]?.message?.content
+          ?? result?.text
+          ?? result?.content
+          ?? (typeof result === 'string' ? result : JSON.stringify(result));
+        log.info('RequestScheduler', `Request succeeded on ${account.id} via drivers/call`, { accountId: account.id, requestId, latency });
+        return { success: true, response: String(content), accountId: account.id, latency, retryCount: 0, statusCode: response.status, error: null };
       }
 
-      const errorBody = await response.text().catch(() => '');
       let errorMsg = `HTTP ${response.status}`;
-      if (errorBody) errorMsg += `: ${errorBody.slice(0, 200)}`;
+      if (raw) errorMsg += `: ${raw.slice(0, 400)}`;
+      else if (parsed?.error) errorMsg += `: ${JSON.stringify(parsed.error).slice(0, 400)}`;
 
-      if (response.status === 429 || response.status === 402) {
+      if (response.status === 429 || response.status === 402 || parsed?.error?.code === 'insufficient_funds' || parsed?.metadata?.usage_limited) {
         this.accountManager.setAccountStatus(account.id, 'exhausted');
-        log.warn('RequestScheduler', `Account ${account.id} rate limited/credit exhausted`, {
-          accountId: account.id,
-          requestId,
-          statusCode: response.status,
-        });
+        log.warn('RequestScheduler', `Account ${account.id} rate limited/credit exhausted`, { accountId: account.id, requestId, statusCode: response.status });
       }
 
-      return {
-        success: false,
-        response: null,
-        accountId: account.id,
-        latency,
-        retryCount: 0,
-        statusCode: response.status,
-        error: errorMsg,
-      };
+      return { success: false, response: null, accountId: account.id, latency, retryCount: 0, statusCode: response.status, error: errorMsg };
     } catch (err) {
       const latency = Date.now() - startTime;
       const errorMsg = err instanceof Error ? err.message : String(err);

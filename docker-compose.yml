@@ -24,8 +24,6 @@ services:
       - MAX_RETRIES=3
       - ACCOUNTS=${ACCOUNTS:-[]}
       - SQLITE_PATH=${SQLITE_PATH:-data/pool.db}
-      - NEON_DATABASE_URL=${NEON_DATABASE_URL:-}
-      - DATABASE_URL=${DATABASE_URL:-}
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
