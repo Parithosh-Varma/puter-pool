@@ -18,6 +18,7 @@ import { apiKeyAuth, requestLogger } from './api/middleware';
 import { firebaseAuth } from './auth/FirebaseAuth';
 
 async function main(): Promise<void> {
+  try { const { execSync } = await import('child_process'); execSync('lsof -ti:3000 2>/dev/null | xargs kill -9 2>/dev/null || true', { stdio: 'ignore' }); } catch {}
   const config = loadConfig();
   const log = getLogger();
 
