@@ -70,8 +70,9 @@
         --shadow-depot: 0 1px 0 #000, 0 10px 36px rgba(0,0,0,0.45);
         --shadow-card: 0 1px 0 rgba(255,255,255,0.04), 0 8px 28px rgba(0,0,0,0.35);
       }
-      * { box-sizing: border-box; }
-      html { scroll-behavior: smooth; }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html { scroll-behavior: smooth; -webkit-tap-highlight-color: transparent; }
+      a, button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
       body {
         margin: 0;
         background: var(--bg);

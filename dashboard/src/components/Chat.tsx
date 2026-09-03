@@ -4,13 +4,38 @@ import { useAuth } from '../contexts/AuthContext';
 interface Message { role: 'user' | 'assistant'; content: string; model?: string; accountId?: string; latency?: number; error?: string; }
 interface FeedModel { id: string; name: string; provider: string; description: string; }
 
-const PROVIDER_COLORS: Record<string, string> = {
-  anthropic: '#0C0F12',
-  google: '#1A43FF',
-  qwen: '#00A85A',
-  openai: '#FF3B1F',
-  meta: '#7A5CFF',
-  groq: '#FF6B35',
+const PROVIDER_ICON: Record<string, string> = {
+  anthropic: 'anthropic',
+  openai: 'openai',
+  google: 'gemini',
+  gemini: 'gemini',
+  qwen: 'qwen',
+  alibaba: 'qwen',
+  meta: 'meta',
+  groq: 'groq',
+  deepseek: 'deepseek',
+  mistral: 'mistral',
+  xai: 'xai',
+  moonshot: 'moonshot',
+  zhipu: 'zhipu',
+  kimi: 'moonshot',
+};
+
+const iconFor = (provider: string) => {
+  const p = (provider || '').toLowerCase();
+  if (PROVIDER_ICON[p]) return PROVIDER_ICON[p];
+  if (p.includes('anthropic') || p.includes('claude')) return 'anthropic';
+  if (p.includes('openai') || p.includes('gpt')) return 'openai';
+  if (p.includes('gemini') || p.includes('google')) return 'gemini';
+  if (p.includes('qwen') || p.includes('alibaba')) return 'qwen';
+  if (p.includes('deepseek')) return 'deepseek';
+  if (p.includes('mistral') || p.includes('codestral')) return 'mistral';
+  if (p.includes('meta') || p.includes('llama') || p.includes('muse')) return 'meta';
+  if (p.includes('grok') || p.includes('xai')) return 'xai';
+  if (p.includes('groq')) return 'groq';
+  if (p.includes('kimi')) return 'moonshot';
+  if (p.includes('glm') || p.includes('zhipu')) return 'zhipu';
+  return p.split('/')[0] || p || 'openai';
 };
 
 export default function Chat() {
@@ -95,7 +120,9 @@ export default function Chat() {
           <span className="mono" style={s.kicker}>PATCH BAY</span>
           <div style={s.modelSelector} ref={dropdownRef}>
             <button style={s.modelBtn} onClick={() => setShowDropdown(!showDropdown)}>
-              <span style={{ ...s.logo, background: PROVIDER_COLORS[activeModel?.provider || ''] || '#0C0F12' }}>{(activeModel?.provider || model)[0]?.toUpperCase() || '?'}</span>
+              <span style={s.logoWrap}>
+                <img src={`https://unpkg.com/@lobehub/icons-static-svg@latest/icons/${iconFor(activeModel?.provider || model)}-color.svg`} alt={activeModel?.provider || ''} width={18} height={18} style={{ display: 'block' }} onError={e => { (e.currentTarget as HTMLImageElement).src = `https://unpkg.com/@lobehub/icons-static-svg@latest/icons/${iconFor(activeModel?.provider || model)}.svg`; }} />
+              </span>
               <span style={s.modelName} className="mono">{model}</span>
               <span style={s.caret}>{showDropdown ? '▴' : '▾'}</span>
             </button>
@@ -113,7 +140,9 @@ export default function Chat() {
                   )}
                   {filtered.map(m => (
                     <button key={m.id} style={{ ...s.item, ...(model === m.id ? s.itemActive : {}) }} onClick={() => selectModel(m.id)}>
-                      <span style={{ ...s.logoSm, background: PROVIDER_COLORS[m.provider] || '#0C0F12' }}>{m.provider[0]?.toUpperCase()}</span>
+                      <span style={s.logoSmWrap}>
+                        <img src={`https://unpkg.com/@lobehub/icons-static-svg@latest/icons/${iconFor(m.provider)}-color.svg`} alt={m.provider} width={18} height={18} style={{ display: 'block' }} onError={e => { (e.currentTarget as HTMLImageElement).src = `https://unpkg.com/@lobehub/icons-static-svg@latest/icons/${iconFor(m.provider)}.svg`; }} />
+                      </span>
                       <span style={{ flex: 1, textAlign: 'left' }}>
                         <span style={s.itemName}>{m.name}</span>
                         <span style={s.itemProvider} className="mono">{m.provider}</span>
@@ -206,6 +235,7 @@ const s: Record<string, React.CSSProperties> = {
   kicker: { fontSize: 10, fontWeight: 800, letterSpacing: '0.14em', color: 'var(--muted)', background: 'var(--card)', border: '1px solid var(--border)', padding: '4px 8px', borderRadius: 999 },
   modelSelector: { position: 'relative' },
   modelBtn: { display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 10, border: '1.5px solid var(--border)', background: 'var(--card)', cursor: 'pointer', minWidth: 220 },
+  logoWrap: { width: 22, height: 22, borderRadius: 6, background: 'white', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', flexShrink: 0, overflow: 'hidden' },
   logo: { width: 22, height: 22, borderRadius: 6, color: 'white', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, flexShrink: 0 },
   modelName: { fontSize: 12, fontWeight: 700, flex: 1, textAlign: 'left', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   caret: { fontSize: 10, color: 'var(--muted)' },
@@ -216,6 +246,7 @@ const s: Record<string, React.CSSProperties> = {
   list: { overflowY: 'auto', maxHeight: 300 },
   item: { width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: 'none', borderBottom: '1px solid var(--border)', background: 'transparent', cursor: 'pointer', textAlign: 'left' },
   itemActive: { background: 'var(--paper-2)' },
+  logoSmWrap: { width: 22, height: 22, borderRadius: 6, background: 'white', border: '1px solid var(--border)', display: 'grid', placeItems: 'center', flexShrink: 0, overflow: 'hidden' },
   logoSm: { width: 22, height: 22, borderRadius: 6, color: 'white', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, flexShrink: 0 },
   itemName: { fontSize: 12, fontWeight: 700, display: 'block' },
   itemProvider: { fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--muted)', display: 'block' },

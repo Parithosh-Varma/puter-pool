@@ -172,5 +172,6 @@ export interface AppConfig {
   logLevel: LogLevel;
   logFile: string;
   apiKey: string;
+  groqApiKey: string;
   googleClientId: string;
 }
