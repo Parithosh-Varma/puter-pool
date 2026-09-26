@@ -14,7 +14,7 @@ import { Database } from './database';
 import { createRouter } from './api/routes';
 import { createOpenAIRouter } from './api/openai';
 import { createAnthropicRouter } from './api/anthropic';
-import { apiKeyAuth, requestLogger } from './api/middleware';
+import { requestLogger } from './api/middleware';
 import { firebaseAuth } from './auth/FirebaseAuth';
 
 async function main(): Promise<void> {

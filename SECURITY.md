@@ -1,7 +1,7 @@
 # Security Policy
 
 Puter Pool runs a local API server that holds sensitive credentials (Puter
-account tokens, your own `API_KEY`, optional Google OAuth client ID/secret)
+account tokens, your own `API_KEY`, optional Google OAuth client ID)
 and proxies requests to third-party AI providers. We take reports about
 credential exposure, auth bypass, and injection issues seriously.
 
@@ -76,7 +76,9 @@ misconfigurations):
   (`change-me-to-a-secure-random-string`) — never deploy with it unchanged.
   `apiKeyAuth` middleware (`src/api/middleware.ts`) skips authentication
   entirely when `NODE_ENV=development`, so make sure production deployments
-  set `NODE_ENV=production` (or another non-development value).
+  set `NODE_ENV=production` (or another non-development value). Note the
+  production API guard is `firebaseAuth` (`src/index.ts`); `apiKeyAuth` is
+  currently not wired into the request path.
 - **Never commit `.env`, `data/pool.db`, or `logs/`.** These can contain
   Puter account tokens, your API key, and request logs. Check `.gitignore`
   before pushing a fork or a deployment branch.
@@ -88,7 +90,7 @@ misconfigurations):
   expose the API or dashboard publicly (not just `localhost`), put it behind
   your own auth/reverse proxy in addition to `API_KEY`, and review CORS/
   `helmet` settings in `src/index.ts` for your deployment.
-- **Rotate `GOOGLE_CLIENT_ID`/secret and Supabase keys** the same way you
+- **Rotate `GOOGLE_CLIENT_ID`, `GROQ_API_KEY`, and Supabase keys** the same way you
   would any OAuth or database credential if they're ever exposed.
 
 ## Disclosure Policy
